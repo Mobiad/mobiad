@@ -1,12 +1,16 @@
 <template>
 
   <!-- Payment -->
-  <div >
+  <div v-if="!loading">
     <div class="row justify-content-center mt-5">
 
       <div class="col-md-5"  v-if="!success && !isLoading">
 
-        <b-card style=" background-color: #ecf3f8"   >
+        <h5  v-if="customer.is_paid===0"
+             style="font-weight: lighter; margin-bottom: 18px" class="justify-content-center"
+        > Customer: {{ customer.businessname}} </h5>
+
+        <b-card style=" background-color: #ecf3f8" v-if="customer.is_paid===0"   >
           <h4 style="margin-bottom: 0.5em; color: #4484bc;"> Tigo Pesa Payment </h4>
           <p>Enter a tigo number to pay.</p>
           <b-input-group class="my-2">
@@ -32,6 +36,22 @@
           </p>
 
         </b-card>
+
+        <div v-else >
+          <div  style="margin-top: 48px"  >
+            <div class="row justify-content-center">
+              <b-icon-check-circle class="h3 success mr-2 " variant="success"></b-icon-check-circle >
+            </div>
+            <div class="row justify-content-center ">
+              <span> Dear {{ customer.businessname}}, Your payment is complete </span>
+            </div>
+
+          </div>
+
+        </div>
+
+
+
       </div>
 
       <div  style="margin-top: 48px" v-if="isLoading">
@@ -59,6 +79,18 @@
         </div>
       </div>
 
+
+    </div>
+  </div>
+
+  <div v-else >
+    <div  style="margin-top: 48px"  >
+      <div class="row justify-content-center">
+        <b-spinner variant="primary" label="Spinning"></b-spinner>
+      </div>
+      <div class="row justify-content-center mt-5">
+        <span>Loading customer info ...</span>
+      </div>
 
     </div>
 
@@ -104,6 +136,22 @@ export default {
     },
     methods: {
 
+      fetchCustomerInfo() {
+        this.loading = true;
+        let endpoint = window.site_url + "/customer/info?customer_id=" + this.customer_id;
+        console.log(endpoint);
+
+        axios.get(endpoint, this.form)
+            .then(response => {
+              this.loading = false;
+              this.customer = response.data.customer;
+              console.log(this.customer)
+            }).catch(error => {
+          this.loading = false;
+          console.log(error)
+        });
+      },
+
       /** Payment API **/
       initPayment() {
 
@@ -118,13 +166,13 @@ export default {
               this.isLoading = false;
               this.success = true;
               this.toast("Success",  "Enter your tigopesa password on your phone ", 'success')
+              this.fetchCustomerInfo();
             })
             .catch(error => {
               this.isLoading = false;
               this.toast("Error", error.response.data.message, 'danger')
             });
       },
-
 
       /*** helper **/
 
@@ -152,7 +200,7 @@ export default {
   created() {
       this.customer_id = this.getCookie('customer_id');
       console.log(this.customer_id);
-      this.fetchCustomerInfo();
+       this.fetchCustomerInfo();
   },
   mounted() {
       //this.toast('hoho',"wrewr");
