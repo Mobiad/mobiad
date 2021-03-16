@@ -119,6 +119,8 @@ class CustomerController extends Controller{
 
     public function  paymentInit(Request $request){
 
+        Log::debug("Start payment init");
+        Log::debug($request->all());
         $customer = Customer::where(['id'=>$request->input('customer_id')])->with(['phones'])->first();
 
         if(!$customer){
@@ -149,6 +151,8 @@ class CustomerController extends Controller{
         if(!$status){
             return response()->json(["message"=>"Transaction failed, try again later or contact us now"],400);
         }
+
+        Log::debug("End payment init, status: ".$status);
 
         return response()->json(["message"=>"Success"]);
     }
