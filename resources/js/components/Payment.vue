@@ -154,7 +154,6 @@ export default {
 
       /** Payment API **/
       initPayment() {
-
         this.isLoading = true;
         let data = {"payment_phone": this.payment_phone, "customer_id": this.customer_id };
         let endpoint = window.site_url + "/api/payment/init";
@@ -166,7 +165,6 @@ export default {
               this.isLoading = false;
               this.success = true;
               this.toast("Success",  "Enter your tigopesa password on your phone ", 'success')
-              this.fetchCustomerInfo();
             })
             .catch(error => {
               this.isLoading = false;
