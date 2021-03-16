@@ -1899,10 +1899,10 @@ module.exports = {
 
 /***/ }),
 
-/***/ "./node_modules/babel-loader/lib/index.js?!./node_modules/vue-loader/lib/index.js?!./resources/js/components/Form.vue?vue&type=script&lang=js&":
-/*!***************************************************************************************************************************************************************!*\
-  !*** ./node_modules/babel-loader/lib??ref--4-0!./node_modules/vue-loader/lib??vue-loader-options!./resources/js/components/Form.vue?vue&type=script&lang=js& ***!
-  \***************************************************************************************************************************************************************/
+/***/ "./node_modules/babel-loader/lib/index.js?!./node_modules/vue-loader/lib/index.js?!./resources/js/components/OtpMultipleVerification.vue?vue&type=script&lang=js&":
+/*!**********************************************************************************************************************************************************************************!*\
+  !*** ./node_modules/babel-loader/lib??ref--4-0!./node_modules/vue-loader/lib??vue-loader-options!./resources/js/components/OtpMultipleVerification.vue?vue&type=script&lang=js& ***!
+  \**********************************************************************************************************************************************************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -2001,6 +2001,684 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+
+/* harmony default export */ __webpack_exports__["default"] = ({
+  data: function data() {
+    return {
+      dismissSecs: 10,
+      dismissCountDown: 0,
+      form: {
+        fullname: "",
+        phone: "",
+        businessname: "",
+        businessdesc: "",
+        subscription_period: 1,
+        tune: 1,
+        voice: "male",
+        ref: "",
+        subscriber_numbers: [{
+          key: 1,
+          value: ""
+        }],
+        terms_and_conditions: 0
+      },
+      show: true,
+      loading: false,
+      response: {
+        status: "warning",
+        message: ""
+      },
+      monthPrice: 15000,
+      subscriptionForm: false,
+      customer_id: null,
+      customer: {},
+      isVerifying: false,
+      numbers: {
+        otps: []
+      }
+    };
+  },
+  computed: {
+    responseStatus: function responseStatus() {
+      return this.response.status ? this.response.status : "warning";
+    },
+    termsValidation: function termsValidation() {
+      return this.form.terms_and_conditions == 1;
+    },
+    tuneProduction: function tuneProduction() {
+      return this.form.tune;
+    },
+    subscriberPhoneNumbers: function subscriberPhoneNumbers() {
+      var results = this.form.subscriber_numbers.filter(function (phone) {
+        return phone.value != "";
+      });
+      return results;
+    },
+    totalSubscriberPhoneNumbers: function totalSubscriberPhoneNumbers() {
+      return Math.round(this.customer.subscription_period * this.customer.phones.length * this.monthPrice);
+    },
+    totalSubscriptionCost: function totalSubscriptionCost() {
+      return Math.round(this.totalSubscriberPhoneNumbers);
+    },
+    allPhonesAgreed: function allPhonesAgreed() {
+      var agreed = true;
+      this.customer.phones.forEach(function (item) {
+        if (item.has_accepted_terms === 0) {
+          agreed = false;
+        }
+      });
+      return agreed;
+    }
+  },
+  methods: {
+    toast: function toast(title, message, color) {
+      this.counter++;
+      this.$bvToast.toast(message, {
+        title: title,
+        toaster: "b-toaster-bottom-right",
+        solid: true,
+        appendToast: true,
+        variant: color,
+        autoHideDelay: 5000
+      });
+    },
+    onSubmit: function onSubmit(event) {
+      var _this = this;
+
+      event.preventDefault();
+      var numbers = this.form.subscriber_numbers.map(function (item) {
+        return item.value;
+      });
+      this.form.numbers = numbers;
+      console.log(JSON.stringify(this.form));
+
+      if (!this.termsValidation) {
+        return;
+      }
+
+      console.log("Signing up");
+      this.loading = true;
+      axios__WEBPACK_IMPORTED_MODULE_0___default.a.post("signup", this.form).then(function (response) {
+        _this.loading = false;
+        _this.response = response.data;
+
+        if (response.data.message.length != 0) {
+          _this.response.message = JSON.stringify(response.data.message, null, 4);
+        }
+
+        _this.onReset();
+      })["catch"](function (error) {
+        console.log(JSON.stringify(error));
+        _this.loading = false;
+        _this.response = error.response.data;
+      });
+    },
+    fetchCustomerInfo: function fetchCustomerInfo() {
+      var _this2 = this;
+
+      this.loading = true;
+      var endpoint = window.site_url + "/customer/info?customer_id=" + this.customer_id;
+      console.log(endpoint);
+      axios__WEBPACK_IMPORTED_MODULE_0___default.a.get(endpoint, this.form).then(function (response) {
+        _this2.loading = false;
+        _this2.customer = response.data.customer;
+        console.log(_this2.customer);
+      })["catch"](function (error) {
+        _this2.loading = false;
+        console.log(error);
+      });
+    },
+
+    /** Payment API **/
+    verifyOtp: function verifyOtp(index) {
+      var _this3 = this;
+
+      this.isVerifying = true;
+      var data = {
+        "phone_number": this.customer.phones[index].phone,
+        "otp": this.numbers.otps[index]
+      };
+      var endpoint = window.site_url + "/api/verify/otp";
+      console.log(endpoint);
+      console.log(JSON.stringify(data));
+      axios__WEBPACK_IMPORTED_MODULE_0___default.a.post(endpoint, data).then(function (response) {
+        _this3.isVerifying = false;
+
+        _this3.toast("Success", data.phone_number + " Verified", 'success');
+
+        _this3.fetchCustomerInfo();
+      })["catch"](function (error) {
+        _this3.isVerifying = false;
+
+        _this3.toast("Error", error.response.data.message, 'danger');
+      });
+    },
+    redirectionToPaymentPage: function redirectionToPaymentPage() {
+      var paymentPage = window.site_url + "/payment/form?customer_id=" + this.customer.id;
+      window.location = paymentPage;
+    },
+
+    /**helper **/
+    getCookie: function getCookie(cname) {
+      var _document$cookie$matc;
+
+      return ((_document$cookie$matc = document.cookie.match('(^|;)\\s*' + cname + '\\s*=\\s*([^;]+)')) === null || _document$cookie$matc === void 0 ? void 0 : _document$cookie$matc.pop()) || '';
+    }
+  },
+  created: function created() {
+    this.customer_id = this.getCookie('customer_id');
+    console.log(this.customer_id);
+    this.fetchCustomerInfo();
+  },
+  mounted: function mounted() {//this.toast('hoho',"wrewr");
+  }
+});
+
+/***/ }),
+
+/***/ "./node_modules/babel-loader/lib/index.js?!./node_modules/vue-loader/lib/index.js?!./resources/js/components/OtpSingleVerification.vue?vue&type=script&lang=js&":
+/*!********************************************************************************************************************************************************************************!*\
+  !*** ./node_modules/babel-loader/lib??ref--4-0!./node_modules/vue-loader/lib??vue-loader-options!./resources/js/components/OtpSingleVerification.vue?vue&type=script&lang=js& ***!
+  \********************************************************************************************************************************************************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var axios__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! axios */ "./node_modules/axios/index.js");
+/* harmony import */ var axios__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(axios__WEBPACK_IMPORTED_MODULE_0__);
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+
+/* harmony default export */ __webpack_exports__["default"] = ({
+  data: function data() {
+    return {
+      dismissSecs: 10,
+      dismissCountDown: 0,
+      show: true,
+      loading: false,
+      success: false,
+      phone_number: null,
+      otp: null
+    };
+  },
+  computed: {},
+  methods: {
+    toast: function toast(title, message, color) {
+      this.counter++;
+      this.$bvToast.toast(message, {
+        title: title,
+        toaster: "b-toaster-bottom-right",
+        solid: true,
+        appendToast: true,
+        variant: color,
+        autoHideDelay: 5000
+      });
+    },
+
+    /** Payment API **/
+    verifyOtp: function verifyOtp() {
+      var _this = this;
+
+      this.isVerifying = true;
+      var data = {
+        "phone_number": this.phone_number,
+        "otp": this.otp
+      };
+      var endpoint = window.site_url + "/api/verify/otp";
+      console.log(endpoint);
+      console.log(JSON.stringify(data));
+      axios__WEBPACK_IMPORTED_MODULE_0___default.a.post(endpoint, data).then(function (response) {
+        _this.isVerifying = false;
+        _this.success = true;
+
+        _this.toast("Success", data.phone_number + " Verified", 'success');
+      })["catch"](function (error) {
+        _this.isVerifying = false;
+
+        _this.toast("Error", error.response.data.message, 'danger');
+      });
+    },
+    redirectionToPaymentPage: function redirectionToPaymentPage() {
+      var paymentPage = window.site_url + "/payment/form?customer_id=" + this.customer.id;
+      window.location = paymentPage;
+    },
+
+    /**helper **/
+    getCookie: function getCookie(cname) {
+      var _document$cookie$matc;
+
+      return ((_document$cookie$matc = document.cookie.match('(^|;)\\s*' + cname + '\\s*=\\s*([^;]+)')) === null || _document$cookie$matc === void 0 ? void 0 : _document$cookie$matc.pop()) || '';
+    }
+  },
+  created: function created() {
+    this.phone_number = this.getCookie('phone_number');
+    console.log(this.phone_number);
+  },
+  mounted: function mounted() {}
+});
+
+/***/ }),
+
+/***/ "./node_modules/babel-loader/lib/index.js?!./node_modules/vue-loader/lib/index.js?!./resources/js/components/Payment.vue?vue&type=script&lang=js&":
+/*!******************************************************************************************************************************************************************!*\
+  !*** ./node_modules/babel-loader/lib??ref--4-0!./node_modules/vue-loader/lib??vue-loader-options!./resources/js/components/Payment.vue?vue&type=script&lang=js& ***!
+  \******************************************************************************************************************************************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var axios__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! axios */ "./node_modules/axios/index.js");
+/* harmony import */ var axios__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(axios__WEBPACK_IMPORTED_MODULE_0__);
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+
+/* harmony default export */ __webpack_exports__["default"] = ({
+  data: function data() {
+    return {
+      dismissSecs: 10,
+      dismissCountDown: 0,
+      show: true,
+      loading: false,
+      response: {
+        status: "warning",
+        message: ""
+      },
+      monthPrice: 15000,
+      payment_phone: null,
+      subscriptionForm: false,
+      isLoading: false,
+      customer_id: null,
+      customer: {},
+      success: false
+    };
+  },
+  computed: {
+    responseStatus: function responseStatus() {
+      return this.response.status ? this.response.status : "warning";
+    },
+    termsValidation: function termsValidation() {
+      return this.form.terms_and_conditions == 1;
+    }
+  },
+  methods: {
+    /** Payment API **/
+    initPayment: function initPayment() {
+      var _this = this;
+
+      this.isLoading = true;
+      var data = {
+        "payment_phone": this.payment_phone,
+        "customer_id": this.customer_id
+      };
+      var endpoint = window.site_url + "/api/payment/init";
+      console.log(endpoint);
+      console.log(JSON.stringify(data));
+      axios__WEBPACK_IMPORTED_MODULE_0___default.a.post(endpoint, data).then(function (response) {
+        _this.isLoading = false;
+        _this.success = true;
+
+        _this.toast("Success", "Enter your tigopesa password on your phone ", 'success');
+      })["catch"](function (error) {
+        _this.isLoading = false;
+
+        _this.toast("Error", error.response.data.message, 'danger');
+      });
+    },
+
+    /*** helper **/
+    getCookie: function getCookie(cname) {
+      var _document$cookie$matc;
+
+      return ((_document$cookie$matc = document.cookie.match('(^|;)\\s*' + cname + '\\s*=\\s*([^;]+)')) === null || _document$cookie$matc === void 0 ? void 0 : _document$cookie$matc.pop()) || '';
+    },
+    toast: function toast(title, message, color) {
+      this.counter++;
+      this.$bvToast.toast(message, {
+        title: title,
+        toaster: "b-toaster-bottom-right",
+        solid: true,
+        appendToast: true,
+        variant: color,
+        autoHideDelay: 5000
+      });
+    }
+  },
+  created: function created() {
+    this.customer_id = this.getCookie('customer_id');
+    console.log(this.customer_id);
+    this.fetchCustomerInfo();
+  },
+  mounted: function mounted() {//this.toast('hoho',"wrewr");
+  }
+});
+
+/***/ }),
+
+/***/ "./node_modules/babel-loader/lib/index.js?!./node_modules/vue-loader/lib/index.js?!./resources/js/components/Phone.vue?vue&type=script&lang=js&":
+/*!****************************************************************************************************************************************************************!*\
+  !*** ./node_modules/babel-loader/lib??ref--4-0!./node_modules/vue-loader/lib??vue-loader-options!./resources/js/components/Phone.vue?vue&type=script&lang=js& ***!
+  \****************************************************************************************************************************************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var lodash_debounce__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! lodash/debounce */ "./node_modules/lodash/debounce.js");
+/* harmony import */ var lodash_debounce__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(lodash_debounce__WEBPACK_IMPORTED_MODULE_0__);
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+
+/* harmony default export */ __webpack_exports__["default"] = ({
+  data: function data() {
+    return {
+      parameters: "phone:",
+      phone: "",
+      country: "",
+      country_name: "",
+      withCountry: false,
+      loading: false,
+      response: {
+        loading: false,
+        request: {},
+        rules: {},
+        passes: null,
+        message: ""
+      }
+    };
+  },
+  computed: {
+    countryInputName: function countryInputName() {
+      if (this.country_name.length > 0 && this.country_name !== "phone") {
+        return this.country_name;
+      }
+
+      return "field_country";
+    },
+    requestData: function requestData() {
+      var data = {
+        parameters: this.parameters,
+        field: this.phone
+      };
+
+      if (this.withCountry) {
+        data[this.countryInputName] = this.country;
+        data.country_name = this.countryInputName;
+      }
+
+      return data;
+    },
+    shouldValidate: function shouldValidate() {
+      return this.phone.trim().length > 0 || this.parameters.trim().length > 0 && this.parameters !== "phone:";
+    },
+    showHelp: function showHelp() {
+      return !this.shouldValidate;
+    }
+  },
+  watch: {
+    phone: function phone(value, old) {
+      if (this.shouldValidate) {
+        this.validate();
+      }
+    },
+    parameters: function parameters(value, old) {
+      if (this.shouldValidate) {
+        this.validate();
+      }
+    },
+    country: function country(value, old) {
+      if (this.shouldValidate) {
+        this.validate();
+      }
+    },
+    country_name: function country_name(value, old) {
+      if (this.shouldValidate) {
+        this.validate();
+      }
+    },
+    withCountry: function withCountry(value, old) {
+      if (this.shouldValidate) {
+        this.validate();
+      }
+    }
+  },
+  methods: {
+    toggle: function toggle() {
+      this.withCountry = !this.withCountry;
+    },
+    formatAsPHPArray: function formatAsPHPArray(json) {
+      if (typeof json === "undefined") {
+        return "";
+      }
+
+      return JSON.stringify(json, null, 4).replace(/^{/g, "[").replace(/}$/g, "]").replace(/": /g, "' => ").replace(/"/g, "'");
+    },
+    validate: lodash_debounce__WEBPACK_IMPORTED_MODULE_0___default()(function () {
+      var _this = this;
+
+      this.loading = true;
+      axios.post("api/validate", this.requestData).then(function (response) {
+        _this.loading = false;
+        _this.response = response.data;
+
+        if (response.data.message.length != 0) {
+          _this.response.message = JSON.stringify(response.data.message, null, 4);
+        }
+      })["catch"](function (error) {
+        _this.loading = false;
+        _this.response = error.response.data;
+      });
+    }, 300)
+  }
+});
+
+/***/ }),
+
+/***/ "./node_modules/babel-loader/lib/index.js?!./node_modules/vue-loader/lib/index.js?!./resources/js/components/SubscriptionForm.vue?vue&type=script&lang=js&":
+/*!***************************************************************************************************************************************************************************!*\
+  !*** ./node_modules/babel-loader/lib??ref--4-0!./node_modules/vue-loader/lib??vue-loader-options!./resources/js/components/SubscriptionForm.vue?vue&type=script&lang=js& ***!
+  \***************************************************************************************************************************************************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var axios__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! axios */ "./node_modules/axios/index.js");
+/* harmony import */ var axios__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(axios__WEBPACK_IMPORTED_MODULE_0__);
 //
 //
 //
@@ -2316,8 +2994,8 @@ __webpack_require__.r(__webpack_exports__);
         message: ""
       },
       monthPrice: 15000,
-      subscriptionForm: false,
-      paymentForm: false
+      customer: {},
+      subscriptionForm: false
     };
   },
   computed: {
@@ -2376,30 +3054,40 @@ __webpack_require__.r(__webpack_exports__);
       });
       this.form.numbers = numbers;
       console.log(JSON.stringify(this.form));
-      return;
 
-      if (this.termsValidation) {
-        this.loading = true;
-        axios__WEBPACK_IMPORTED_MODULE_0___default.a.post("signup", this.form).then(function (response) {
-          _this.loading = false;
-          _this.response = response.data;
-
-          _this.showAlert();
-
-          if (response.data.message.length != 0) {
-            _this.response.message = JSON.stringify(response.data.message, null, 4);
-          }
-
-          _this.signupToast("b-toaster-bottom-right", true);
-
-          _this.onReset();
-        })["catch"](function (error) {
-          _this.showAlert();
-
-          _this.loading = false;
-          _this.response = error.response.data;
-        });
+      if (!this.termsValidation) {
+        return;
       }
+
+      console.log("Signing up");
+      this.loading = true;
+      axios__WEBPACK_IMPORTED_MODULE_0___default.a.post("signup", this.form).then(function (response) {
+        console.log(JSON.stringify(response.data));
+        _this.loading = false;
+        _this.response = response.data;
+
+        _this.showAlert();
+
+        if (response.data.message.length != 0) {
+          _this.response.message = JSON.stringify(response.data.message, null, 4);
+        }
+
+        _this.signupToast("b-toaster-bottom-right", true);
+
+        _this.onReset();
+
+        _this.customer = response.data.customer;
+
+        _this.redirectionToPaymentPage();
+      })["catch"](function (error) {
+        _this.showAlert();
+
+        _this.loading = false;
+
+        _this.toast("Error", error.response.data.message, 'danger');
+
+        _this.response = error.response.data;
+      });
     },
     onReset: function onReset() {
       var _this2 = this;
@@ -2429,6 +3117,49 @@ __webpack_require__.r(__webpack_exports__);
     },
     showAlert: function showAlert() {
       this.dismissCountDown = this.dismissSecs;
+    },
+
+    /** Paymemnt   **/
+    redirectionToPaymentPage: function redirectionToPaymentPage() {
+      var verificationPage = window.site_url + "/verification/form?customer_id=" + this.customer.id;
+      window.location = verificationPage;
+    },
+    submitPayment: function submitPayment() {
+      var _this3 = this;
+
+      this.loading = true;
+      axios__WEBPACK_IMPORTED_MODULE_0___default.a.post("signup", this.form).then(function (response) {
+        _this3.loading = false;
+        _this3.response = response.data;
+
+        _this3.showAlert();
+
+        if (response.data.message.length != 0) {
+          _this3.response.message = JSON.stringify(response.data.message, null, 4);
+        }
+
+        _this3.signupToast("b-toaster-bottom-right", true);
+
+        _this3.onReset();
+      })["catch"](function (error) {
+        _this3.showAlert();
+
+        _this3.loading = false;
+        _this3.response = error.response.data;
+      });
+    },
+
+    /*** Helpers **/
+    toast: function toast(title, message, color) {
+      this.counter++;
+      this.$bvToast.toast(message, {
+        title: title,
+        toaster: "b-toaster-bottom-right",
+        solid: true,
+        appendToast: true,
+        variant: color,
+        autoHideDelay: 5000
+      });
     }
   },
   created: function created() {
@@ -2436,153 +3167,6 @@ __webpack_require__.r(__webpack_exports__);
   },
   mounted: function mounted() {
     console.log("Created form....");
-  }
-});
-
-/***/ }),
-
-/***/ "./node_modules/babel-loader/lib/index.js?!./node_modules/vue-loader/lib/index.js?!./resources/js/components/Phone.vue?vue&type=script&lang=js&":
-/*!****************************************************************************************************************************************************************!*\
-  !*** ./node_modules/babel-loader/lib??ref--4-0!./node_modules/vue-loader/lib??vue-loader-options!./resources/js/components/Phone.vue?vue&type=script&lang=js& ***!
-  \****************************************************************************************************************************************************************/
-/*! exports provided: default */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony import */ var lodash_debounce__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! lodash/debounce */ "./node_modules/lodash/debounce.js");
-/* harmony import */ var lodash_debounce__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(lodash_debounce__WEBPACK_IMPORTED_MODULE_0__);
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-
-/* harmony default export */ __webpack_exports__["default"] = ({
-  data: function data() {
-    return {
-      parameters: "phone:",
-      phone: "",
-      country: "",
-      country_name: "",
-      withCountry: false,
-      loading: false,
-      response: {
-        loading: false,
-        request: {},
-        rules: {},
-        passes: null,
-        message: ""
-      }
-    };
-  },
-  computed: {
-    countryInputName: function countryInputName() {
-      if (this.country_name.length > 0 && this.country_name !== "phone") {
-        return this.country_name;
-      }
-
-      return "field_country";
-    },
-    requestData: function requestData() {
-      var data = {
-        parameters: this.parameters,
-        field: this.phone
-      };
-
-      if (this.withCountry) {
-        data[this.countryInputName] = this.country;
-        data.country_name = this.countryInputName;
-      }
-
-      return data;
-    },
-    shouldValidate: function shouldValidate() {
-      return this.phone.trim().length > 0 || this.parameters.trim().length > 0 && this.parameters !== "phone:";
-    },
-    showHelp: function showHelp() {
-      return !this.shouldValidate;
-    }
-  },
-  watch: {
-    phone: function phone(value, old) {
-      if (this.shouldValidate) {
-        this.validate();
-      }
-    },
-    parameters: function parameters(value, old) {
-      if (this.shouldValidate) {
-        this.validate();
-      }
-    },
-    country: function country(value, old) {
-      if (this.shouldValidate) {
-        this.validate();
-      }
-    },
-    country_name: function country_name(value, old) {
-      if (this.shouldValidate) {
-        this.validate();
-      }
-    },
-    withCountry: function withCountry(value, old) {
-      if (this.shouldValidate) {
-        this.validate();
-      }
-    }
-  },
-  methods: {
-    toggle: function toggle() {
-      this.withCountry = !this.withCountry;
-    },
-    formatAsPHPArray: function formatAsPHPArray(json) {
-      if (typeof json === "undefined") {
-        return "";
-      }
-
-      return JSON.stringify(json, null, 4).replace(/^{/g, "[").replace(/}$/g, "]").replace(/": /g, "' => ").replace(/"/g, "'");
-    },
-    validate: lodash_debounce__WEBPACK_IMPORTED_MODULE_0___default()(function () {
-      var _this = this;
-
-      this.loading = true;
-      axios.post("api/validate", this.requestData).then(function (response) {
-        _this.loading = false;
-        _this.response = response.data;
-
-        if (response.data.message.length != 0) {
-          _this.response.message = JSON.stringify(response.data.message, null, 4);
-        }
-      })["catch"](function (error) {
-        _this.loading = false;
-        _this.response = error.response.data;
-      });
-    }, 300)
   }
 });
 
@@ -52948,10 +53532,10 @@ var e=function(){return(e=Object.assign||function(e){for(var t,r=1,s=arguments.l
 
 /***/ }),
 
-/***/ "./node_modules/vue-loader/lib/loaders/templateLoader.js?!./node_modules/vue-loader/lib/index.js?!./resources/js/components/Form.vue?vue&type=template&id=8048fca2&":
-/*!*******************************************************************************************************************************************************************************************************!*\
-  !*** ./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/vue-loader/lib??vue-loader-options!./resources/js/components/Form.vue?vue&type=template&id=8048fca2& ***!
-  \*******************************************************************************************************************************************************************************************************/
+/***/ "./node_modules/vue-loader/lib/loaders/templateLoader.js?!./node_modules/vue-loader/lib/index.js?!./resources/js/components/OtpMultipleVerification.vue?vue&type=template&id=4105cc7b&":
+/*!**************************************************************************************************************************************************************************************************************************!*\
+  !*** ./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/vue-loader/lib??vue-loader-options!./resources/js/components/OtpMultipleVerification.vue?vue&type=template&id=4105cc7b& ***!
+  \**************************************************************************************************************************************************************************************************************************/
 /*! exports provided: render, staticRenderFns */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -52963,595 +53547,212 @@ var render = function() {
   var _vm = this
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
-  return _vm.subscriptionForm
-    ? _c("div", [
-        _c("div", { staticClass: "row justify-content-center" }, [
-          _c(
-            "div",
-            { staticClass: "col-md-7" },
-            [
-              _c(
-                "b-alert",
-                {
-                  attrs: {
-                    show: _vm.dismissCountDown,
-                    dismissible: "",
-                    variant: _vm.responseStatus
-                  },
-                  on: {
-                    dismissed: function($event) {
-                      _vm.dismissCountDown = 0
-                    },
-                    "dismiss-count-down": _vm.countDownChanged
-                  }
-                },
-                [_c("p", [_vm._v(_vm._s(_vm.response.message))])]
-              ),
-              _vm._v(" "),
-              _vm.show
-                ? _c(
-                    "b-form",
-                    { on: { submit: _vm.onSubmit, reset: _vm.onReset } },
+  return _c("div", [
+    !_vm.loading
+      ? _c("div", { staticClass: "row justify-content-center" }, [
+          _c("div", { staticClass: "col-md-5" }, [
+            _c(
+              "h4",
+              { staticStyle: { color: "#4484bc", "font-weight": "lighter" } },
+              [_vm._v(" Hello, " + _vm._s(_vm.customer.businessname))]
+            )
+          ]),
+          _vm._v(" "),
+          _c("div", { staticClass: "col-md-5" }),
+          _vm._v(" "),
+          !_vm.allPhonesAgreed
+            ? _c(
+                "div",
+                { staticClass: "col-md-5" },
+                [
+                  _c(
+                    "b-card",
+                    { staticStyle: { "background-color": "#ecf3f8" } },
                     [
                       _c(
                         "h4",
                         {
                           staticStyle: {
-                            "margin-top": "1.5em",
+                            "margin-bottom": "0.5em",
                             color: "#4484bc"
                           }
                         },
-                        [_vm._v(" Primary information ")]
+                        [_vm._v(" Policy agreement ")]
                       ),
                       _vm._v(" "),
-                      _c(
-                        "b-form-group",
-                        {
-                          attrs: {
-                            id: "input-group-name",
-                            label: "Name / Jina:",
-                            "label-for": "input-name"
-                          }
-                        },
-                        [
-                          _c("b-form-input", {
-                            attrs: {
-                              id: "input-name",
-                              type: "text",
-                              placeholder: "Enter your name / Andika jina lako",
-                              required: ""
-                            },
-                            model: {
-                              value: _vm.form.fullname,
-                              callback: function($$v) {
-                                _vm.$set(_vm.form, "fullname", $$v)
-                              },
-                              expression: "form.fullname"
-                            }
-                          }),
-                          _vm._v(" "),
-                          _c("b-form-invalid-feedback", [
-                            _vm._v(
-                              "\n            Your user ID must be 5-12 characters long.\n          "
-                            )
-                          ])
-                        ],
-                        1
-                      ),
-                      _vm._v(" "),
-                      _c(
-                        "b-form-group",
-                        {
-                          attrs: {
-                            id: "input-group-phone",
-                            label: "Phone Number / Namba ya Simu:",
-                            "label-for": "input-phone",
-                            description:
-                              "Hatutasambaza namba ya simu yako na mtu mwingine yeyote."
-                          }
-                        },
-                        [
-                          _c("b-form-input", {
-                            attrs: {
-                              id: "input-phone",
-                              type: "tel",
-                              placeholder:
-                                "Enter your phone number / Andika namba ya simu",
-                              required: ""
-                            },
-                            model: {
-                              value: _vm.form.phone,
-                              callback: function($$v) {
-                                _vm.$set(_vm.form, "phone", $$v)
-                              },
-                              expression: "form.phone"
-                            }
-                          })
-                        ],
-                        1
-                      ),
-                      _vm._v(" "),
-                      _c(
-                        "b-form-group",
-                        {
-                          attrs: {
-                            id: "input-group-businessname",
-                            label: "Business Name / Jina la Biashara:",
-                            "label-for": "input-businessname"
-                          }
-                        },
-                        [
-                          _c("b-form-input", {
-                            attrs: {
-                              id: "input-businessname",
-                              type: "text",
-                              placeholder:
-                                "Enter your business name / Andika jina la biashara yako",
-                              required: ""
-                            },
-                            model: {
-                              value: _vm.form.businessname,
-                              callback: function($$v) {
-                                _vm.$set(_vm.form, "businessname", $$v)
-                              },
-                              expression: "form.businessname"
-                            }
-                          })
-                        ],
-                        1
-                      ),
-                      _vm._v(" "),
-                      _c(
-                        "b-form-group",
-                        {
-                          staticClass: "my-4",
-                          attrs: {
-                            id: "input-group-businessdesc",
-                            label:
-                              "Business Description (SCRIPT) / Maelezo ya Biashara:",
-                            "label-for": "textarea"
-                          }
-                        },
-                        [
-                          _c("b-form-textarea", {
-                            attrs: {
-                              id: "textarea",
-                              placeholder:
-                                "Enter your business description here / Maelezo ya biashara yako",
-                              rows: "3",
-                              "max-rows": "6"
-                            },
-                            model: {
-                              value: _vm.form.businessdesc,
-                              callback: function($$v) {
-                                _vm.$set(_vm.form, "businessdesc", $$v)
-                              },
-                              expression: "form.businessdesc"
-                            }
-                          })
-                        ],
-                        1
-                      ),
-                      _vm._v(" "),
-                      _c(
-                        "h4",
-                        {
-                          staticStyle: {
-                            "margin-top": "1.5em",
-                            color: "#4484bc"
-                          }
-                        },
-                        [_vm._v(" Subscription information ")]
-                      ),
-                      _vm._v(" "),
-                      _c("b-form-group", {
-                        staticClass: "my-4",
-                        attrs: {
-                          id: "input-group-4",
-                          label: "Service Period/ Miezi ya Huduma",
-                          description:
-                            "Gharama za muito wa simu kwa namba moja ni shilingi TZS 10,000/= kwa Mwezi mmoja\n                              (TZS 10,000 / Kwa Mwezi / Kwa Namba Moja)",
-                          "label-for": "input-subscription_period"
-                        },
-                        scopedSlots: _vm._u(
-                          [
-                            {
-                              key: "default",
-                              fn: function(ref) {
-                                var ariaDescribedby = ref.ariaDescribedby
-                                return [
-                                  _c(
-                                    "b-form-radio-group",
-                                    {
-                                      attrs: {
-                                        id: "input-subscription_period",
-                                        "aria-describedby": ariaDescribedby
-                                      },
-                                      model: {
-                                        value: _vm.form.subscription_period,
-                                        callback: function($$v) {
-                                          _vm.$set(
-                                            _vm.form,
-                                            "subscription_period",
-                                            $$v
-                                          )
-                                        },
-                                        expression: "form.subscription_period"
-                                      }
-                                    },
-                                    [
-                                      _c(
-                                        "b-form-radio",
-                                        { attrs: { value: "1" } },
-                                        [_vm._v("1 Month ")]
-                                      ),
-                                      _vm._v(" "),
-                                      _c(
-                                        "b-form-radio",
-                                        { attrs: { value: "3" } },
-                                        [_vm._v("3 Months")]
-                                      ),
-                                      _vm._v(" "),
-                                      _c(
-                                        "b-form-radio",
-                                        { attrs: { value: "6" } },
-                                        [_vm._v("6 Months")]
-                                      )
-                                    ],
-                                    1
-                                  )
-                                ]
-                              }
-                            }
-                          ],
-                          null,
-                          false,
-                          3982008364
+                      _c("p", { staticStyle: { "font-weight": "lighter" } }, [
+                        _vm._v(
+                          "By entering the received code you are agreeing to our terms and conditions"
                         )
-                      }),
+                      ]),
                       _vm._v(" "),
-                      _c(
-                        "b-form-group",
-                        {
-                          staticClass: "my-4",
-                          attrs: {
-                            id: "input-group-tune",
-                            label:
-                              "Include Tune Production / Kutengeneza Muito",
-                            description:
-                              "Gharama za kutengeneza muito wa biashara yako ni shilingi TZS 20,000/=",
-                            "label-for": "input-tune"
-                          }
-                        },
-                        [
-                          _c(
-                            "b-form-radio-group",
-                            {
-                              attrs: { id: "input-tune" },
-                              model: {
-                                value: _vm.form.tune,
-                                callback: function($$v) {
-                                  _vm.$set(_vm.form, "tune", $$v)
-                                },
-                                expression: "form.tune"
-                              }
-                            },
-                            [
-                              _c("b-form-radio", { attrs: { value: "1" } }, [
-                                _vm._v("Yes")
-                              ]),
-                              _vm._v(" "),
-                              _c("b-form-radio", { attrs: { value: "0" } }, [
-                                _vm._v("No")
-                              ])
-                            ],
-                            1
-                          )
-                        ],
-                        1
-                      ),
-                      _vm._v(" "),
-                      _vm.form.tune === 1
+                      !_vm.isVerifying
                         ? _c(
-                            "b-form-group",
-                            {
-                              staticClass: "my-4",
-                              attrs: {
-                                id: "input-group-voice",
-                                label: "Audio voice over / Sauti ya  Muito",
-                                "label-for": "input-voice"
-                              }
-                            },
-                            [
-                              _c(
-                                "b-form-radio-group",
+                            "div",
+                            _vm._l(_vm.customer.phones, function(phone, index) {
+                              return _c(
+                                "div",
                                 {
-                                  attrs: { id: "input-voice" },
-                                  model: {
-                                    value: _vm.form.voice,
-                                    callback: function($$v) {
-                                      _vm.$set(_vm.form, "voice", $$v)
-                                    },
-                                    expression: "form.voice"
-                                  }
+                                  key: index,
+                                  staticStyle: { "margin-bottom": "24px" }
                                 },
                                 [
-                                  _c(
-                                    "b-form-radio",
-                                    { attrs: { value: "male" } },
-                                    [_vm._v("Male")]
-                                  ),
+                                  _c("span", [
+                                    _vm._v(
+                                      _vm._s(index + 1) +
+                                        ". " +
+                                        _vm._s(phone.phone)
+                                    )
+                                  ]),
                                   _vm._v(" "),
-                                  _c(
-                                    "b-form-radio",
-                                    { attrs: { value: "female" } },
-                                    [_vm._v("Female")]
-                                  )
+                                  phone.has_accepted_terms
+                                    ? _c(
+                                        "div",
+                                        {
+                                          staticClass:
+                                            "justify-content-center align-content-center mt-2"
+                                        },
+                                        [
+                                          _c(
+                                            "div",
+                                            {
+                                              staticClass:
+                                                "row align-content-start"
+                                            },
+                                            [
+                                              _c(
+                                                "div",
+                                                { staticClass: "col-md-1" },
+                                                [
+                                                  _c("b-icon-check-circle", {
+                                                    staticClass:
+                                                      "h3 success mr-2 ",
+                                                    attrs: {
+                                                      variant: "success"
+                                                    }
+                                                  })
+                                                ],
+                                                1
+                                              ),
+                                              _vm._v(" "),
+                                              _c(
+                                                "div",
+                                                {
+                                                  staticClass: "align-top col"
+                                                },
+                                                [
+                                                  _vm._v(
+                                                    "\n                  Accepted terms\n                "
+                                                  )
+                                                ]
+                                              )
+                                            ]
+                                          )
+                                        ]
+                                      )
+                                    : _vm._l(
+                                        _vm.form.subscriber_numbers,
+                                        function(phone) {
+                                          return _c(
+                                            "b-input-group",
+                                            {
+                                              key: phone.key,
+                                              staticClass: "my-2"
+                                            },
+                                            [
+                                              _c("b-form-input", {
+                                                ref: phone,
+                                                refInFor: true,
+                                                attrs: {
+                                                  id:
+                                                    "input-subscriber_numbers",
+                                                  type: "text",
+                                                  placeholder:
+                                                    "Verification Code",
+                                                  required: ""
+                                                },
+                                                model: {
+                                                  value:
+                                                    _vm.numbers.otps[index],
+                                                  callback: function($$v) {
+                                                    _vm.$set(
+                                                      _vm.numbers.otps,
+                                                      index,
+                                                      $$v
+                                                    )
+                                                  },
+                                                  expression:
+                                                    "numbers.otps[index]"
+                                                }
+                                              }),
+                                              _vm._v(" "),
+                                              _c(
+                                                "b-input-group-append",
+                                                [
+                                                  _c(
+                                                    "b-button",
+                                                    {
+                                                      attrs: {
+                                                        variant: "primary"
+                                                      },
+                                                      on: {
+                                                        click: function(
+                                                          $event
+                                                        ) {
+                                                          return _vm.verifyOtp(
+                                                            index
+                                                          )
+                                                        }
+                                                      }
+                                                    },
+                                                    [
+                                                      _vm._v(
+                                                        "Verify\n                "
+                                                      )
+                                                    ]
+                                                  )
+                                                ],
+                                                1
+                                              )
+                                            ],
+                                            1
+                                          )
+                                        }
+                                      )
                                 ],
-                                1
+                                2
+                              )
+                            }),
+                            0
+                          )
+                        : _c(
+                            "div",
+                            { staticStyle: { padding: "12px" } },
+                            [
+                              _c("b-spinner", {
+                                attrs: { variant: "primary", label: "Spinning" }
+                              }),
+                              _vm._v(
+                                "\n              Verifying the number ...\n        "
                               )
                             ],
                             1
                           )
-                        : _vm._e(),
-                      _vm._v(" "),
-                      _c(
-                        "b-form-group",
-                        {
-                          attrs: {
-                            id: "input-group-ref",
-                            label:
-                              "Ref Number (optional) / Kumbukumbu Namba (Sio lazima kujaza)",
-                            "label-for": "input-ref"
-                          }
-                        },
-                        [
-                          _c("b-form-input", {
-                            attrs: {
-                              id: "input-ref",
-                              type: "text",
-                              placeholder:
-                                "Enter Ref Number / Andika namba ya kumbukumbu"
-                            },
-                            model: {
-                              value: _vm.form.ref,
-                              callback: function($$v) {
-                                _vm.$set(_vm.form, "ref", $$v)
-                              },
-                              expression: "form.ref"
-                            }
-                          })
-                        ],
-                        1
-                      ),
-                      _vm._v(" "),
-                      _c(
-                        "h4",
-                        {
-                          staticStyle: {
-                            "margin-top": "1.5em",
-                            color: "#4484bc"
-                          }
-                        },
-                        [_vm._v(" Phone Numbers ")]
-                      ),
-                      _vm._v(" "),
-                      _c(
-                        "b-form-group",
-                        {
-                          staticClass: "my-4",
-                          attrs: {
-                            id: "input-group-subscriber_numbers",
-                            "label-for": "input-subscriber_numbers"
-                          }
-                        },
-                        [
-                          _c(
-                            "label",
-                            {
-                              staticClass: "row",
-                              attrs: { for: "input-subscriber_numbers" }
-                            },
-                            [
-                              _c("div", { staticClass: "col" }, [
-                                _vm._v(
-                                  "\n              Phone numbers to activate the service / Namba za\n              kuweka Muito:\n            "
-                                )
-                              ]),
-                              _vm._v(" "),
-                              _c(
-                                "div",
-                                { staticClass: "col" },
-                                [
-                                  _c(
-                                    "b-button",
-                                    {
-                                      staticClass: "float-right my-1",
-                                      attrs: {
-                                        variant: "primary",
-                                        size: "small"
-                                      },
-                                      on: { click: _vm.addPhoneNumbers }
-                                    },
-                                    [
-                                      _vm._v(
-                                        "\n                Add another phone number\n              "
-                                      )
-                                    ]
-                                  )
-                                ],
-                                1
-                              )
-                            ]
-                          ),
-                          _vm._v(" "),
-                          _vm._l(_vm.form.subscriber_numbers, function(phone) {
-                            return _c(
-                              "b-input-group",
-                              { key: phone.key, staticClass: "my-2" },
-                              [
-                                _c("b-form-input", {
-                                  attrs: {
-                                    id: "input-subscriber_numbers",
-                                    type: "text",
-                                    placeholder: "Eg: 255 781 123312",
-                                    required: ""
-                                  },
-                                  model: {
-                                    value: phone.value,
-                                    callback: function($$v) {
-                                      _vm.$set(phone, "value", $$v)
-                                    },
-                                    expression: "phone.value"
-                                  }
-                                }),
-                                _vm._v(" "),
-                                _c(
-                                  "b-input-group-append",
-                                  [
-                                    _c(
-                                      "b-button",
-                                      {
-                                        attrs: { variant: "danger" },
-                                        on: {
-                                          click: function($event) {
-                                            return _vm.removePhoneNumber(phone)
-                                          }
-                                        }
-                                      },
-                                      [_vm._v("Remove")]
-                                    )
-                                  ],
-                                  1
-                                )
-                              ],
-                              1
-                            )
-                          })
-                        ],
-                        2
-                      ),
-                      _vm._v(" "),
-                      _c("div", { staticStyle: { height: "24px" } }),
-                      _vm._v(" "),
-                      _c(
-                        "b-form-group",
-                        {
-                          staticClass: "my-4",
-                          attrs: { id: "input-group-terms_and_conditions" }
-                        },
-                        [
-                          _c("div", { staticClass: "row" }, [
-                            _c(
-                              "div",
-                              { staticClass: "col-md-6" },
-                              [
-                                _c(
-                                  "b-form-checkbox",
-                                  {
-                                    attrs: {
-                                      state: _vm.termsValidation,
-                                      id: "checkbox-terms_and_conditions",
-                                      value: "1",
-                                      "unchecked-value": "0"
-                                    },
-                                    model: {
-                                      value: _vm.form.terms_and_conditions,
-                                      callback: function($$v) {
-                                        _vm.$set(
-                                          _vm.form,
-                                          "terms_and_conditions",
-                                          $$v
-                                        )
-                                      },
-                                      expression: "form.terms_and_conditions"
-                                    }
-                                  },
-                                  [
-                                    _vm._v(
-                                      "Nimekubali Vigezo na Masharti\n              "
-                                    )
-                                  ]
-                                ),
-                                _vm._v(" "),
-                                _c(
-                                  "b-form-invalid-feedback",
-                                  { attrs: { state: _vm.termsValidation } },
-                                  [
-                                    _vm._v(
-                                      "\n                Check this box to indicate that you have read\n                and agree our Terms and Conditions\n              "
-                                    )
-                                  ]
-                                )
-                              ],
-                              1
-                            ),
-                            _vm._v(" "),
-                            _c("div", { staticClass: "col-md-6" }, [
-                              _c(
-                                "a",
-                                {
-                                  attrs: {
-                                    href: "/service_agreement.pdf",
-                                    target: "blank"
-                                  }
-                                },
-                                [
-                                  _vm._v(
-                                    "\n                Bonyeza hapa kusoma vigezo na masharti\n              "
-                                  )
-                                ]
-                              )
-                            ])
-                          ])
-                        ]
-                      ),
-                      _vm._v(" "),
-                      _c(
-                        "b-button",
-                        {
-                          staticClass: "w-100",
-                          attrs: {
-                            type: "submit",
-                            variant: "primary",
-                            disabled: _vm.loading
-                          }
-                        },
-                        [
-                          _vm.loading
-                            ? _c("b-spinner", {
-                                attrs: {
-                                  type: "grow",
-                                  label: "Spinning",
-                                  small: ""
-                                }
-                              })
-                            : _vm._e(),
-                          _vm._v("\n          Submit / Tuma\n        ")
-                        ],
-                        1
-                      )
-                    ],
-                    1
+                    ]
                   )
-                : _vm._e()
-            ],
-            1
-          ),
+                ],
+                1
+              )
+            : _vm._e(),
           _vm._v(" "),
           _c("div", { staticClass: "col-md-5" }, [
             _c(
               "div",
               { staticClass: "content" },
               [
-                _c("h6", [_vm._v("Hello 👋🏽, " + _vm._s(_vm.form.fullname))]),
-                _vm._v(" "),
                 _c(
                   "b-card",
-                  {
-                    staticClass: "mt-3",
-                    attrs: { header: "Your Total Costs are" }
-                  },
+                  { attrs: { header: "Your Total Costs are" } },
                   [
                     _c("pre", { staticClass: "m-0" }),
                     _vm._v(" "),
@@ -53567,7 +53768,7 @@ var render = function() {
                           ]),
                           _vm._v(" "),
                           _c("th", { attrs: { scope: "col" } }, [
-                            _vm._v(" Months ")
+                            _vm._v(" Months")
                           ]),
                           _vm._v(" "),
                           _c("th", { attrs: { scope: "col" } }, [
@@ -53579,23 +53780,17 @@ var render = function() {
                       _c("tbody", [
                         _c("tr", [
                           _c("td", [
-                            _vm._v(
-                              " " +
-                                _vm._s(this.subscriberPhoneNumbers.length) +
-                                " "
-                            )
+                            _vm._v(" " + _vm._s(_vm.customer.phones.length))
                           ]),
                           _vm._v(" "),
                           _c("td", [
                             _vm._v(
-                              "  " +
-                                _vm._s(_vm.monthPrice.toLocaleString()) +
-                                " "
+                              " " + _vm._s(_vm.monthPrice.toLocaleString())
                             )
                           ]),
                           _vm._v(" "),
                           _c("td", [
-                            _vm._v(_vm._s(_vm.form.subscription_period))
+                            _vm._v(_vm._s(_vm.customer.subscription_period))
                           ]),
                           _vm._v(" "),
                           _c("td", [
@@ -53613,51 +53808,239 @@ var render = function() {
                           _c("td", [_vm._v(_vm._s(_vm.totalSubscriptionCost))])
                         ])
                       ])
-                    ])
-                  ]
+                    ]),
+                    _vm._v(" "),
+                    _vm.allPhonesAgreed
+                      ? _c(
+                          "b-button",
+                          {
+                            staticClass: "w-100",
+                            attrs: {
+                              variant: "primary",
+                              disabled: _vm.loading
+                            },
+                            on: {
+                              click: function($event) {
+                                return _vm.redirectionToPaymentPage()
+                              }
+                            }
+                          },
+                          [
+                            _vm.loading
+                              ? _c("b-spinner", {
+                                  attrs: {
+                                    type: "grow",
+                                    label: "Spinning",
+                                    small: ""
+                                  }
+                                })
+                              : _vm._e(),
+                            _vm._v("\n            Pay Now\n          ")
+                          ],
+                          1
+                        )
+                      : _vm._e()
+                  ],
+                  1
                 )
               ],
               1
             )
           ])
         ])
-      ])
-    : _c("div", [
-        _c("div", { staticClass: "row justify-content-center" }, [
-          _c(
+      : _c(
+          "div",
+          { staticStyle: { padding: "12px" } },
+          [
+            _c("b-spinner", {
+              attrs: { variant: "primary", label: "Spinning" }
+            }),
+            _vm._v("\n        Loading...\n  ")
+          ],
+          1
+        )
+  ])
+}
+var staticRenderFns = []
+render._withStripped = true
+
+
+
+/***/ }),
+
+/***/ "./node_modules/vue-loader/lib/loaders/templateLoader.js?!./node_modules/vue-loader/lib/index.js?!./resources/js/components/OtpSingleVerification.vue?vue&type=template&id=59d720b3&":
+/*!************************************************************************************************************************************************************************************************************************!*\
+  !*** ./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/vue-loader/lib??vue-loader-options!./resources/js/components/OtpSingleVerification.vue?vue&type=template&id=59d720b3& ***!
+  \************************************************************************************************************************************************************************************************************************/
+/*! exports provided: render, staticRenderFns */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "render", function() { return render; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "staticRenderFns", function() { return staticRenderFns; });
+var render = function() {
+  var _vm = this
+  var _h = _vm.$createElement
+  var _c = _vm._self._c || _h
+  return _c("div", [
+    !_vm.loading
+      ? _c("div", { staticClass: "row justify-content-center" }, [
+          !_vm.success
+            ? _c(
+                "div",
+                { staticClass: "col-md-5 mt-5" },
+                [
+                  _c(
+                    "b-card",
+                    { staticStyle: { "background-color": "#ecf3f8" } },
+                    [
+                      _c(
+                        "h5",
+                        {
+                          staticStyle: {
+                            "margin-bottom": "0.5em",
+                            color: "#4484bc"
+                          }
+                        },
+                        [
+                          _vm._v(
+                            " Verify your phone " +
+                              _vm._s(_vm.phone_number) +
+                              " "
+                          )
+                        ]
+                      ),
+                      _vm._v(" "),
+                      _c("p", { staticStyle: { "font-weight": "lighter" } }, [
+                        _vm._v(
+                          "By entering the received verification code you are agreeing  to our terms of service"
+                        )
+                      ]),
+                      _vm._v(" "),
+                      _c("p", [_vm._v("Enter verification code")]),
+                      _vm._v(" "),
+                      _c(
+                        "b-input-group",
+                        { staticClass: "my-2" },
+                        [
+                          _c("b-form-input", {
+                            attrs: {
+                              id: "input-subscriber_numbers",
+                              type: "text",
+                              placeholder: "Code",
+                              required: ""
+                            },
+                            model: {
+                              value: _vm.otp,
+                              callback: function($$v) {
+                                _vm.otp = $$v
+                              },
+                              expression: "otp"
+                            }
+                          }),
+                          _vm._v(" "),
+                          _c(
+                            "b-input-group-append",
+                            [
+                              _c(
+                                "b-button",
+                                {
+                                  attrs: { variant: "success" },
+                                  on: {
+                                    click: function($event) {
+                                      return _vm.verifyOtp()
+                                    }
+                                  }
+                                },
+                                [_vm._v("SUBMIT")]
+                              )
+                            ],
+                            1
+                          )
+                        ],
+                        1
+                      )
+                    ],
+                    1
+                  )
+                ],
+                1
+              )
+            : _c("div", { staticStyle: { "margin-top": "48px" } }, [
+                _c("div", { staticClass: "row align-content-start" }, [
+                  _c(
+                    "div",
+                    { staticClass: "col-md-1" },
+                    [
+                      _c("b-icon-check-circle", {
+                        staticClass: "h3 success mr-2 ",
+                        attrs: { variant: "success" }
+                      })
+                    ],
+                    1
+                  ),
+                  _vm._v(" "),
+                  _c("div", { staticClass: "align-top col" }, [
+                    _vm._v(
+                      "\n         Success, you have agreed to the terms of services\n        "
+                    )
+                  ])
+                ])
+              ])
+        ])
+      : _c(
+          "div",
+          { staticStyle: { padding: "12px" } },
+          [
+            _c("b-spinner", {
+              attrs: { variant: "primary", label: "Spinning" }
+            }),
+            _vm._v("\n        Loading...\n  ")
+          ],
+          1
+        )
+  ])
+}
+var staticRenderFns = []
+render._withStripped = true
+
+
+
+/***/ }),
+
+/***/ "./node_modules/vue-loader/lib/loaders/templateLoader.js?!./node_modules/vue-loader/lib/index.js?!./resources/js/components/Payment.vue?vue&type=template&id=7bace86b&":
+/*!**********************************************************************************************************************************************************************************************************!*\
+  !*** ./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/vue-loader/lib??vue-loader-options!./resources/js/components/Payment.vue?vue&type=template&id=7bace86b& ***!
+  \**********************************************************************************************************************************************************************************************************/
+/*! exports provided: render, staticRenderFns */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "render", function() { return render; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "staticRenderFns", function() { return staticRenderFns; });
+var render = function() {
+  var _vm = this
+  var _h = _vm.$createElement
+  var _c = _vm._self._c || _h
+  return _c("div", [
+    _c("div", { staticClass: "row justify-content-center mt-5" }, [
+      !_vm.success && !_vm.isLoading
+        ? _c(
             "div",
             { staticClass: "col-md-5" },
             [
               _c(
-                "b-button",
-                { attrs: { type: "submit", variant: "danger" } },
-                [
-                  _vm.loading
-                    ? _c("b-spinner", {
-                        attrs: { type: "grow", label: "Spinning", small: "" }
-                      })
-                    : _vm._e(),
-                  _vm._v("\n       Go Back\n      ")
-                ],
-                1
-              ),
-              _vm._v(" "),
-              _c(
                 "b-card",
-                {
-                  staticStyle: {
-                    "margin-top": "2em",
-                    "background-color": "#ecf3f8"
-                  }
-                },
+                { staticStyle: { "background-color": "#ecf3f8" } },
                 [
                   _c(
                     "h4",
                     {
                       staticStyle: {
                         "margin-bottom": "0.5em",
-                        color: "#4484bc",
-                        "font-weight": "lighter"
+                        color: "#4484bc"
                       }
                     },
                     [_vm._v(" Tigo Pesa Payment ")]
@@ -53665,145 +54048,134 @@ var render = function() {
                   _vm._v(" "),
                   _c("p", [_vm._v("Enter a tigo number to pay.")]),
                   _vm._v(" "),
-                  _vm._l(_vm.form.subscriber_numbers, function(phone) {
-                    return _c(
-                      "b-input-group",
-                      { key: phone.key, staticClass: "my-2" },
-                      [
-                        _c("b-form-input", {
-                          attrs: {
-                            id: "input-subscriber_numbers",
-                            type: "text",
-                            placeholder: "Example: 255 656 026 235",
-                            required: ""
+                  _c(
+                    "b-input-group",
+                    { staticClass: "my-2" },
+                    [
+                      _c("b-form-input", {
+                        attrs: {
+                          id: "input-subscriber_numbers",
+                          type: "text",
+                          placeholder: "Example: 255 656 026 235",
+                          required: ""
+                        },
+                        model: {
+                          value: _vm.payment_phone,
+                          callback: function($$v) {
+                            _vm.payment_phone = $$v
                           },
-                          model: {
-                            value: phone.value,
-                            callback: function($$v) {
-                              _vm.$set(phone, "value", $$v)
-                            },
-                            expression: "phone.value"
-                          }
-                        }),
-                        _vm._v(" "),
-                        _c(
-                          "b-input-group-append",
-                          [
-                            _c(
-                              "b-button",
-                              {
-                                attrs: { variant: "success" },
-                                on: {
-                                  click: function($event) {
-                                    return _vm.removePhoneNumber(phone)
-                                  }
+                          expression: "payment_phone"
+                        }
+                      }),
+                      _vm._v(" "),
+                      _c(
+                        "b-input-group-append",
+                        [
+                          _c(
+                            "b-button",
+                            {
+                              attrs: { variant: "success" },
+                              on: {
+                                click: function($event) {
+                                  return _vm.initPayment()
                                 }
-                              },
-                              [_vm._v("PAY NOW")]
-                            )
-                          ],
-                          1
-                        )
-                      ],
-                      1
-                    )
-                  }),
+                              }
+                            },
+                            [_vm._v("PAY NOW")]
+                          )
+                        ],
+                        1
+                      )
+                    ],
+                    1
+                  ),
                   _vm._v(" "),
-                  _c("p", { staticStyle: { "font-weight": "lighter" } }, [
-                    _vm._v(
-                      "You will be prompted to enter your tigopesa password inorder to complete payment"
-                    )
-                  ])
+                  _c(
+                    "p",
+                    {
+                      staticClass: "mt-5",
+                      staticStyle: { "font-weight": "lighter" }
+                    },
+                    [
+                      _vm._v(
+                        "\n          You will be prompted to enter your tigopesa PASSWORD on your PHONE inorder to complete payment\n        "
+                      )
+                    ]
+                  )
                 ],
-                2
+                1
               )
             ],
             1
-          ),
-          _vm._v(" "),
-          _c("div", { staticClass: "col-md-5" }, [
+          )
+        : _vm._e(),
+      _vm._v(" "),
+      _vm.isLoading
+        ? _c("div", { staticStyle: { "margin-top": "48px" } }, [
             _c(
               "div",
-              { staticClass: "content" },
+              { staticClass: "row justify-content-center" },
               [
-                _c(
-                  "b-card",
-                  {
-                    staticClass: "mt-3",
-                    attrs: { header: "Your Total Costs are" }
-                  },
-                  [
-                    _c("pre", { staticClass: "m-0" }),
-                    _vm._v(" "),
-                    _c("table", { staticClass: "table" }, [
-                      _c("thead", [
-                        _c("tr", [
-                          _c("th", { attrs: { scope: "col" } }, [
-                            _vm._v("Phone Numbers")
-                          ]),
-                          _vm._v(" "),
-                          _c("th", { attrs: { scope: "col" } }, [
-                            _vm._v(" Price(TZS)")
-                          ]),
-                          _vm._v(" "),
-                          _c("th", { attrs: { scope: "col" } }, [
-                            _vm._v(" Months ")
-                          ]),
-                          _vm._v(" "),
-                          _c("th", { attrs: { scope: "col" } }, [
-                            _vm._v("Total(TZS)")
-                          ])
-                        ])
-                      ]),
-                      _vm._v(" "),
-                      _c("tbody", [
-                        _c("tr", [
-                          _c("td", [
-                            _vm._v(
-                              " " +
-                                _vm._s(this.subscriberPhoneNumbers.length) +
-                                " "
-                            )
-                          ]),
-                          _vm._v(" "),
-                          _c("td", [
-                            _vm._v(
-                              "  " +
-                                _vm._s(_vm.monthPrice.toLocaleString()) +
-                                " "
-                            )
-                          ]),
-                          _vm._v(" "),
-                          _c("td", [
-                            _vm._v(_vm._s(_vm.form.subscription_period))
-                          ]),
-                          _vm._v(" "),
-                          _c("td", [
-                            _vm._v(_vm._s(_vm.totalSubscriberPhoneNumbers))
-                          ])
-                        ]),
-                        _vm._v(" "),
-                        _c("tr", [
-                          _c("th", { attrs: { scope: "row", colspan: "3" } }, [
-                            _vm._v(
-                              "\n                Total cost for your subscription\n              "
-                            )
-                          ]),
-                          _vm._v(" "),
-                          _c("td", [_vm._v(_vm._s(_vm.totalSubscriptionCost))])
-                        ])
-                      ])
-                    ])
-                  ]
-                )
+                _c("b-spinner", {
+                  attrs: { variant: "primary", label: "Spinning" }
+                })
               ],
               1
-            )
+            ),
+            _vm._v(" "),
+            _vm._m(0)
           ])
-        ])
-      ])
+        : _vm._e(),
+      _vm._v(" "),
+      _vm.success
+        ? _c("div", { staticStyle: { "margin-top": "48px" } }, [
+            _vm._m(1),
+            _vm._v(" "),
+            _vm._m(2)
+          ])
+        : _vm._e()
+    ])
+  ])
 }
-var staticRenderFns = []
+var staticRenderFns = [
+  function() {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("div", { staticClass: "row align-content-start mt-4" }, [
+      _c("div", { staticClass: "align-top col" }, [
+        _vm._v("\n          Sending request to your phone ...\n        ")
+      ])
+    ])
+  },
+  function() {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("div", { staticClass: "row justify-content-center" }, [
+      _c("img", {
+        staticClass: "mb-5",
+        attrs: {
+          width: "96px",
+          src:
+            "https://www.flaticon.com/svg/vstatic/svg/438/438556.svg?token=exp=1615918058~hmac=6e5fd13d7ebfcbccc38a35ee482db5f4"
+        }
+      })
+    ])
+  },
+  function() {
+    var _vm = this
+    var _h = _vm.$createElement
+    var _c = _vm._self._c || _h
+    return _c("div", { staticClass: "row align-content-start" }, [
+      _c("div", { staticClass: "align-top col" }, [
+        _vm._v(
+          "\n          Enter your tigopesa PASSWORD on your PHONE\n        "
+        )
+      ])
+    ])
+  }
+]
 render._withStripped = true
 
 
@@ -53880,6 +54252,662 @@ var render = function() {
           }
         }
       })
+    ])
+  ])
+}
+var staticRenderFns = []
+render._withStripped = true
+
+
+
+/***/ }),
+
+/***/ "./node_modules/vue-loader/lib/loaders/templateLoader.js?!./node_modules/vue-loader/lib/index.js?!./resources/js/components/SubscriptionForm.vue?vue&type=template&id=55d8ed6c&":
+/*!*******************************************************************************************************************************************************************************************************************!*\
+  !*** ./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/vue-loader/lib??vue-loader-options!./resources/js/components/SubscriptionForm.vue?vue&type=template&id=55d8ed6c& ***!
+  \*******************************************************************************************************************************************************************************************************************/
+/*! exports provided: render, staticRenderFns */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "render", function() { return render; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "staticRenderFns", function() { return staticRenderFns; });
+var render = function() {
+  var _vm = this
+  var _h = _vm.$createElement
+  var _c = _vm._self._c || _h
+  return _c("div", [
+    _c("div", { staticClass: "row justify-content-center" }, [
+      _c(
+        "div",
+        { staticClass: "col-md-7" },
+        [
+          _c(
+            "b-alert",
+            {
+              attrs: {
+                show: _vm.dismissCountDown,
+                dismissible: "",
+                variant: _vm.responseStatus
+              },
+              on: {
+                dismissed: function($event) {
+                  _vm.dismissCountDown = 0
+                },
+                "dismiss-count-down": _vm.countDownChanged
+              }
+            },
+            [_c("p", [_vm._v(_vm._s(_vm.response.message))])]
+          ),
+          _vm._v(" "),
+          _vm.show
+            ? _c(
+                "b-form",
+                { on: { submit: _vm.onSubmit, reset: _vm.onReset } },
+                [
+                  _c(
+                    "h4",
+                    {
+                      staticStyle: { "margin-top": "1.5em", color: "#4484bc" }
+                    },
+                    [_vm._v(" Primary information ")]
+                  ),
+                  _vm._v(" "),
+                  _c(
+                    "b-form-group",
+                    {
+                      attrs: {
+                        id: "input-group-name",
+                        label: "Name / Jina:",
+                        "label-for": "input-name"
+                      }
+                    },
+                    [
+                      _c("b-form-input", {
+                        attrs: {
+                          id: "input-name",
+                          type: "text",
+                          placeholder: "Enter your name / Andika jina lako",
+                          required: ""
+                        },
+                        model: {
+                          value: _vm.form.fullname,
+                          callback: function($$v) {
+                            _vm.$set(_vm.form, "fullname", $$v)
+                          },
+                          expression: "form.fullname"
+                        }
+                      }),
+                      _vm._v(" "),
+                      _c("b-form-invalid-feedback", [
+                        _vm._v(
+                          "\n            Your user ID must be 5-12 characters long.\n          "
+                        )
+                      ])
+                    ],
+                    1
+                  ),
+                  _vm._v(" "),
+                  _c(
+                    "b-form-group",
+                    {
+                      attrs: {
+                        id: "input-group-phone",
+                        label: "Phone Number / Namba ya Simu:",
+                        "label-for": "input-phone",
+                        description:
+                          "Hatutasambaza namba ya simu yako na mtu mwingine yeyote."
+                      }
+                    },
+                    [
+                      _c("b-form-input", {
+                        attrs: {
+                          id: "input-phone",
+                          type: "tel",
+                          placeholder:
+                            "Enter your phone number / Andika namba ya simu",
+                          required: ""
+                        },
+                        model: {
+                          value: _vm.form.phone,
+                          callback: function($$v) {
+                            _vm.$set(_vm.form, "phone", $$v)
+                          },
+                          expression: "form.phone"
+                        }
+                      })
+                    ],
+                    1
+                  ),
+                  _vm._v(" "),
+                  _c(
+                    "b-form-group",
+                    {
+                      attrs: {
+                        id: "input-group-businessname",
+                        label: "Business Name / Jina la Biashara:",
+                        "label-for": "input-businessname"
+                      }
+                    },
+                    [
+                      _c("b-form-input", {
+                        attrs: {
+                          id: "input-businessname",
+                          type: "text",
+                          placeholder:
+                            "Enter your business name / Andika jina la biashara yako",
+                          required: ""
+                        },
+                        model: {
+                          value: _vm.form.businessname,
+                          callback: function($$v) {
+                            _vm.$set(_vm.form, "businessname", $$v)
+                          },
+                          expression: "form.businessname"
+                        }
+                      })
+                    ],
+                    1
+                  ),
+                  _vm._v(" "),
+                  _c(
+                    "b-form-group",
+                    {
+                      staticClass: "my-4",
+                      attrs: {
+                        id: "input-group-businessdesc",
+                        label:
+                          "Business Description (SCRIPT) / Maelezo ya Biashara:",
+                        "label-for": "textarea"
+                      }
+                    },
+                    [
+                      _c("b-form-textarea", {
+                        attrs: {
+                          id: "textarea",
+                          placeholder:
+                            "Enter your business description here / Maelezo ya biashara yako",
+                          rows: "3",
+                          "max-rows": "6"
+                        },
+                        model: {
+                          value: _vm.form.businessdesc,
+                          callback: function($$v) {
+                            _vm.$set(_vm.form, "businessdesc", $$v)
+                          },
+                          expression: "form.businessdesc"
+                        }
+                      })
+                    ],
+                    1
+                  ),
+                  _vm._v(" "),
+                  _c(
+                    "h4",
+                    {
+                      staticStyle: { "margin-top": "1.5em", color: "#4484bc" }
+                    },
+                    [_vm._v(" Subscription information ")]
+                  ),
+                  _vm._v(" "),
+                  _c("b-form-group", {
+                    staticClass: "my-4",
+                    attrs: {
+                      id: "input-group-4",
+                      label: "Service Period/ Miezi ya Huduma",
+                      description:
+                        "Gharama za muito wa simu kwa namba moja ni shilingi TZS 10,000/= kwa Mwezi mmoja\n                              (TZS 10,000 / Kwa Mwezi / Kwa Namba Moja)",
+                      "label-for": "input-subscription_period"
+                    },
+                    scopedSlots: _vm._u(
+                      [
+                        {
+                          key: "default",
+                          fn: function(ref) {
+                            var ariaDescribedby = ref.ariaDescribedby
+                            return [
+                              _c(
+                                "b-form-radio-group",
+                                {
+                                  attrs: {
+                                    id: "input-subscription_period",
+                                    "aria-describedby": ariaDescribedby
+                                  },
+                                  model: {
+                                    value: _vm.form.subscription_period,
+                                    callback: function($$v) {
+                                      _vm.$set(
+                                        _vm.form,
+                                        "subscription_period",
+                                        $$v
+                                      )
+                                    },
+                                    expression: "form.subscription_period"
+                                  }
+                                },
+                                [
+                                  _c(
+                                    "b-form-radio",
+                                    { attrs: { value: "1" } },
+                                    [_vm._v("1 Month")]
+                                  ),
+                                  _vm._v(" "),
+                                  _c(
+                                    "b-form-radio",
+                                    { attrs: { value: "3" } },
+                                    [_vm._v("3 Months")]
+                                  ),
+                                  _vm._v(" "),
+                                  _c(
+                                    "b-form-radio",
+                                    { attrs: { value: "6" } },
+                                    [_vm._v("6 Months")]
+                                  )
+                                ],
+                                1
+                              )
+                            ]
+                          }
+                        }
+                      ],
+                      null,
+                      false,
+                      3401711372
+                    )
+                  }),
+                  _vm._v(" "),
+                  _c(
+                    "b-form-group",
+                    {
+                      staticClass: "my-4",
+                      attrs: {
+                        id: "input-group-tune",
+                        label: "Include Tune Production / Kutengeneza Muito",
+                        description:
+                          "Gharama za kutengeneza muito wa biashara yako ni shilingi TZS 20,000/=",
+                        "label-for": "input-tune"
+                      }
+                    },
+                    [
+                      _c(
+                        "b-form-radio-group",
+                        {
+                          attrs: { id: "input-tune" },
+                          model: {
+                            value: _vm.form.tune,
+                            callback: function($$v) {
+                              _vm.$set(_vm.form, "tune", $$v)
+                            },
+                            expression: "form.tune"
+                          }
+                        },
+                        [
+                          _c("b-form-radio", { attrs: { value: "1" } }, [
+                            _vm._v("Yes")
+                          ]),
+                          _vm._v(" "),
+                          _c("b-form-radio", { attrs: { value: "0" } }, [
+                            _vm._v("No")
+                          ])
+                        ],
+                        1
+                      )
+                    ],
+                    1
+                  ),
+                  _vm._v(" "),
+                  _vm.form.tune === 1
+                    ? _c(
+                        "b-form-group",
+                        {
+                          staticClass: "my-4",
+                          attrs: {
+                            id: "input-group-voice",
+                            label: "Audio voice over / Sauti ya  Muito",
+                            "label-for": "input-voice"
+                          }
+                        },
+                        [
+                          _c(
+                            "b-form-radio-group",
+                            {
+                              attrs: { id: "input-voice" },
+                              model: {
+                                value: _vm.form.voice,
+                                callback: function($$v) {
+                                  _vm.$set(_vm.form, "voice", $$v)
+                                },
+                                expression: "form.voice"
+                              }
+                            },
+                            [
+                              _c("b-form-radio", { attrs: { value: "male" } }, [
+                                _vm._v("Male")
+                              ]),
+                              _vm._v(" "),
+                              _c(
+                                "b-form-radio",
+                                { attrs: { value: "female" } },
+                                [_vm._v("Female")]
+                              )
+                            ],
+                            1
+                          )
+                        ],
+                        1
+                      )
+                    : _vm._e(),
+                  _vm._v(" "),
+                  _c(
+                    "b-form-group",
+                    {
+                      attrs: {
+                        id: "input-group-ref",
+                        label:
+                          "Ref Number (optional) / Kumbukumbu Namba (Sio lazima kujaza)",
+                        "label-for": "input-ref"
+                      }
+                    },
+                    [
+                      _c("b-form-input", {
+                        attrs: {
+                          id: "input-ref",
+                          type: "text",
+                          placeholder:
+                            "Enter Ref Number / Andika namba ya kumbukumbu"
+                        },
+                        model: {
+                          value: _vm.form.ref,
+                          callback: function($$v) {
+                            _vm.$set(_vm.form, "ref", $$v)
+                          },
+                          expression: "form.ref"
+                        }
+                      })
+                    ],
+                    1
+                  ),
+                  _vm._v(" "),
+                  _c(
+                    "h4",
+                    {
+                      staticStyle: { "margin-top": "1.5em", color: "#4484bc" }
+                    },
+                    [_vm._v(" Phone Numbers ")]
+                  ),
+                  _vm._v(" "),
+                  _c(
+                    "b-form-group",
+                    {
+                      staticClass: "my-4",
+                      attrs: {
+                        id: "input-group-subscriber_numbers",
+                        "label-for": "input-subscriber_numbers"
+                      }
+                    },
+                    [
+                      _c(
+                        "label",
+                        {
+                          staticClass: "row",
+                          attrs: { for: "input-subscriber_numbers" }
+                        },
+                        [
+                          _c("div", { staticClass: "col" }, [
+                            _vm._v(
+                              "\n              Phone numbers to activate the service / Namba za\n              kuweka Muito:\n            "
+                            )
+                          ]),
+                          _vm._v(" "),
+                          _c(
+                            "div",
+                            { staticClass: "col" },
+                            [
+                              _c(
+                                "b-button",
+                                {
+                                  staticClass: "float-right my-1",
+                                  attrs: { variant: "primary", size: "small" },
+                                  on: { click: _vm.addPhoneNumbers }
+                                },
+                                [
+                                  _vm._v(
+                                    "\n                Add another phone number\n              "
+                                  )
+                                ]
+                              )
+                            ],
+                            1
+                          )
+                        ]
+                      ),
+                      _vm._v(" "),
+                      _vm._l(_vm.form.subscriber_numbers, function(phone) {
+                        return _c(
+                          "b-input-group",
+                          { key: phone.key, staticClass: "my-2" },
+                          [
+                            _c("b-form-input", {
+                              attrs: {
+                                id: "input-subscriber_numbers",
+                                type: "text",
+                                placeholder: "Eg: 255 781 123312",
+                                required: ""
+                              },
+                              model: {
+                                value: phone.value,
+                                callback: function($$v) {
+                                  _vm.$set(phone, "value", $$v)
+                                },
+                                expression: "phone.value"
+                              }
+                            }),
+                            _vm._v(" "),
+                            _c(
+                              "b-input-group-append",
+                              [
+                                _c(
+                                  "b-button",
+                                  {
+                                    attrs: { variant: "danger" },
+                                    on: {
+                                      click: function($event) {
+                                        return _vm.removePhoneNumber(phone)
+                                      }
+                                    }
+                                  },
+                                  [_vm._v("Remove\n              ")]
+                                )
+                              ],
+                              1
+                            )
+                          ],
+                          1
+                        )
+                      })
+                    ],
+                    2
+                  ),
+                  _vm._v(" "),
+                  _c("div", { staticStyle: { height: "24px" } }),
+                  _vm._v(" "),
+                  _c(
+                    "b-form-group",
+                    {
+                      staticClass: "my-4",
+                      attrs: { id: "input-group-terms_and_conditions" }
+                    },
+                    [
+                      _c("div", { staticClass: "row" }, [
+                        _c(
+                          "div",
+                          { staticClass: "col-md-6" },
+                          [
+                            _c(
+                              "b-form-checkbox",
+                              {
+                                attrs: {
+                                  state: _vm.termsValidation,
+                                  id: "checkbox-terms_and_conditions",
+                                  value: "1",
+                                  "unchecked-value": "0"
+                                },
+                                model: {
+                                  value: _vm.form.terms_and_conditions,
+                                  callback: function($$v) {
+                                    _vm.$set(
+                                      _vm.form,
+                                      "terms_and_conditions",
+                                      $$v
+                                    )
+                                  },
+                                  expression: "form.terms_and_conditions"
+                                }
+                              },
+                              [
+                                _vm._v(
+                                  "Nimekubali Vigezo na Masharti\n              "
+                                )
+                              ]
+                            ),
+                            _vm._v(" "),
+                            _c(
+                              "b-form-invalid-feedback",
+                              { attrs: { state: _vm.termsValidation } },
+                              [
+                                _vm._v(
+                                  "\n                Check this box to indicate that you have read\n                and agree our Terms and Conditions\n              "
+                                )
+                              ]
+                            )
+                          ],
+                          1
+                        ),
+                        _vm._v(" "),
+                        _c("div", { staticClass: "col-md-6" }, [
+                          _c(
+                            "a",
+                            {
+                              attrs: {
+                                href: "/service_agreement.pdf",
+                                target: "blank"
+                              }
+                            },
+                            [
+                              _vm._v(
+                                "\n                Bonyeza hapa kusoma vigezo na masharti\n              "
+                              )
+                            ]
+                          )
+                        ])
+                      ])
+                    ]
+                  ),
+                  _vm._v(" "),
+                  _c(
+                    "b-button",
+                    {
+                      staticClass: "w-100",
+                      attrs: {
+                        type: "submit",
+                        variant: "primary",
+                        disabled: _vm.loading
+                      }
+                    },
+                    [
+                      _vm.loading
+                        ? _c("b-spinner", {
+                            attrs: {
+                              type: "grow",
+                              label: "Spinning",
+                              small: ""
+                            }
+                          })
+                        : _vm._e(),
+                      _vm._v("\n          Submit / Tuma\n        ")
+                    ],
+                    1
+                  )
+                ],
+                1
+              )
+            : _vm._e()
+        ],
+        1
+      ),
+      _vm._v(" "),
+      _c("div", { staticClass: "col-md-5" }, [
+        _c(
+          "div",
+          { staticClass: "content" },
+          [
+            _c("h6", [_vm._v("Hello 👋🏽, " + _vm._s(_vm.form.fullname))]),
+            _vm._v(" "),
+            _c(
+              "b-card",
+              {
+                staticClass: "mt-3",
+                attrs: { header: "Your Total Costs are" }
+              },
+              [
+                _c("pre", { staticClass: "m-0" }),
+                _vm._v(" "),
+                _c("table", { staticClass: "table" }, [
+                  _c("thead", [
+                    _c("tr", [
+                      _c("th", { attrs: { scope: "col" } }, [
+                        _vm._v("Phone Numbers")
+                      ]),
+                      _vm._v(" "),
+                      _c("th", { attrs: { scope: "col" } }, [
+                        _vm._v(" Price(TZS)")
+                      ]),
+                      _vm._v(" "),
+                      _c("th", { attrs: { scope: "col" } }, [
+                        _vm._v(" Months")
+                      ]),
+                      _vm._v(" "),
+                      _c("th", { attrs: { scope: "col" } }, [
+                        _vm._v("Total(TZS)")
+                      ])
+                    ])
+                  ]),
+                  _vm._v(" "),
+                  _c("tbody", [
+                    _c("tr", [
+                      _c("td", [
+                        _vm._v(" " + _vm._s(this.subscriberPhoneNumbers.length))
+                      ]),
+                      _vm._v(" "),
+                      _c("td", [
+                        _vm._v(" " + _vm._s(_vm.monthPrice.toLocaleString()))
+                      ]),
+                      _vm._v(" "),
+                      _c("td", [_vm._v(_vm._s(_vm.form.subscription_period))]),
+                      _vm._v(" "),
+                      _c("td", [
+                        _vm._v(_vm._s(_vm.totalSubscriberPhoneNumbers))
+                      ])
+                    ]),
+                    _vm._v(" "),
+                    _c("tr", [
+                      _c("th", { attrs: { scope: "row", colspan: "3" } }, [
+                        _vm._v(
+                          "\n                Total cost for your subscription\n              "
+                        )
+                      ]),
+                      _vm._v(" "),
+                      _c("td", [_vm._v(_vm._s(_vm.totalSubscriptionCost))])
+                    ])
+                  ])
+                ])
+              ]
+            )
+          ],
+          1
+        )
+      ])
     ])
   ])
 }
@@ -66222,7 +67250,10 @@ vue__WEBPACK_IMPORTED_MODULE_0___default.a.use(bootstrap_vue__WEBPACK_IMPORTED_M
 vue__WEBPACK_IMPORTED_MODULE_0___default.a.use(bootstrap_vue__WEBPACK_IMPORTED_MODULE_1__["ToastPlugin"]); // Optionally install the BootstrapVue icon components plugin
 
 vue__WEBPACK_IMPORTED_MODULE_0___default.a.use(bootstrap_vue__WEBPACK_IMPORTED_MODULE_1__["IconsPlugin"]);
-vue__WEBPACK_IMPORTED_MODULE_0___default.a.component("form-data", __webpack_require__(/*! ./components/Form.vue */ "./resources/js/components/Form.vue")["default"]);
+vue__WEBPACK_IMPORTED_MODULE_0___default.a.component("form-data", __webpack_require__(/*! ./components/SubscriptionForm.vue */ "./resources/js/components/SubscriptionForm.vue")["default"]);
+vue__WEBPACK_IMPORTED_MODULE_0___default.a.component("verification", __webpack_require__(/*! ./components/OtpMultipleVerification.vue */ "./resources/js/components/OtpMultipleVerification.vue")["default"]);
+vue__WEBPACK_IMPORTED_MODULE_0___default.a.component("single-verification", __webpack_require__(/*! ./components/OtpSingleVerification.vue */ "./resources/js/components/OtpSingleVerification.vue")["default"]);
+vue__WEBPACK_IMPORTED_MODULE_0___default.a.component("payment", __webpack_require__(/*! ./components/Payment.vue */ "./resources/js/components/Payment.vue")["default"]);
 vue__WEBPACK_IMPORTED_MODULE_0___default.a.component("phone-input", __webpack_require__(/*! ./components/Phone.vue */ "./resources/js/components/Phone.vue")["default"]);
 vue__WEBPACK_IMPORTED_MODULE_0___default.a.component("table-data", __webpack_require__(/*! ./components/Table.vue */ "./resources/js/components/Table.vue")["default"]);
 /**
@@ -66230,24 +67261,29 @@ vue__WEBPACK_IMPORTED_MODULE_0___default.a.component("table-data", __webpack_req
  * the page. Then, you may begin adding components to this application
  * or customize the JavaScript scaffolding to fit your unique needs.
  */
+//let base_url ="https://" + window.location.host;
 
+var base_url = "http://" + window.location.host;
+window.api_url = base_url + "/api/v1";
+window.site_url = base_url;
+window.img_url = base_url;
 var app = new vue__WEBPACK_IMPORTED_MODULE_0___default.a({
   el: "#app"
 });
 
 /***/ }),
 
-/***/ "./resources/js/components/Form.vue":
-/*!******************************************!*\
-  !*** ./resources/js/components/Form.vue ***!
-  \******************************************/
+/***/ "./resources/js/components/OtpMultipleVerification.vue":
+/*!*************************************************************!*\
+  !*** ./resources/js/components/OtpMultipleVerification.vue ***!
+  \*************************************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _Form_vue_vue_type_template_id_8048fca2___WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./Form.vue?vue&type=template&id=8048fca2& */ "./resources/js/components/Form.vue?vue&type=template&id=8048fca2&");
-/* harmony import */ var _Form_vue_vue_type_script_lang_js___WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./Form.vue?vue&type=script&lang=js& */ "./resources/js/components/Form.vue?vue&type=script&lang=js&");
+/* harmony import */ var _OtpMultipleVerification_vue_vue_type_template_id_4105cc7b___WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./OtpMultipleVerification.vue?vue&type=template&id=4105cc7b& */ "./resources/js/components/OtpMultipleVerification.vue?vue&type=template&id=4105cc7b&");
+/* harmony import */ var _OtpMultipleVerification_vue_vue_type_script_lang_js___WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./OtpMultipleVerification.vue?vue&type=script&lang=js& */ "./resources/js/components/OtpMultipleVerification.vue?vue&type=script&lang=js&");
 /* empty/unused harmony star reexport *//* harmony import */ var _node_modules_vue_loader_lib_runtime_componentNormalizer_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../../../node_modules/vue-loader/lib/runtime/componentNormalizer.js */ "./node_modules/vue-loader/lib/runtime/componentNormalizer.js");
 
 
@@ -66257,9 +67293,9 @@ __webpack_require__.r(__webpack_exports__);
 /* normalize component */
 
 var component = Object(_node_modules_vue_loader_lib_runtime_componentNormalizer_js__WEBPACK_IMPORTED_MODULE_2__["default"])(
-  _Form_vue_vue_type_script_lang_js___WEBPACK_IMPORTED_MODULE_1__["default"],
-  _Form_vue_vue_type_template_id_8048fca2___WEBPACK_IMPORTED_MODULE_0__["render"],
-  _Form_vue_vue_type_template_id_8048fca2___WEBPACK_IMPORTED_MODULE_0__["staticRenderFns"],
+  _OtpMultipleVerification_vue_vue_type_script_lang_js___WEBPACK_IMPORTED_MODULE_1__["default"],
+  _OtpMultipleVerification_vue_vue_type_template_id_4105cc7b___WEBPACK_IMPORTED_MODULE_0__["render"],
+  _OtpMultipleVerification_vue_vue_type_template_id_4105cc7b___WEBPACK_IMPORTED_MODULE_0__["staticRenderFns"],
   false,
   null,
   null,
@@ -66269,38 +67305,176 @@ var component = Object(_node_modules_vue_loader_lib_runtime_componentNormalizer_
 
 /* hot reload */
 if (false) { var api; }
-component.options.__file = "resources/js/components/Form.vue"
+component.options.__file = "resources/js/components/OtpMultipleVerification.vue"
 /* harmony default export */ __webpack_exports__["default"] = (component.exports);
 
 /***/ }),
 
-/***/ "./resources/js/components/Form.vue?vue&type=script&lang=js&":
-/*!*******************************************************************!*\
-  !*** ./resources/js/components/Form.vue?vue&type=script&lang=js& ***!
-  \*******************************************************************/
+/***/ "./resources/js/components/OtpMultipleVerification.vue?vue&type=script&lang=js&":
+/*!**************************************************************************************!*\
+  !*** ./resources/js/components/OtpMultipleVerification.vue?vue&type=script&lang=js& ***!
+  \**************************************************************************************/
 /*! exports provided: default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _node_modules_babel_loader_lib_index_js_ref_4_0_node_modules_vue_loader_lib_index_js_vue_loader_options_Form_vue_vue_type_script_lang_js___WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../node_modules/babel-loader/lib??ref--4-0!../../../node_modules/vue-loader/lib??vue-loader-options!./Form.vue?vue&type=script&lang=js& */ "./node_modules/babel-loader/lib/index.js?!./node_modules/vue-loader/lib/index.js?!./resources/js/components/Form.vue?vue&type=script&lang=js&");
-/* empty/unused harmony star reexport */ /* harmony default export */ __webpack_exports__["default"] = (_node_modules_babel_loader_lib_index_js_ref_4_0_node_modules_vue_loader_lib_index_js_vue_loader_options_Form_vue_vue_type_script_lang_js___WEBPACK_IMPORTED_MODULE_0__["default"]); 
+/* harmony import */ var _node_modules_babel_loader_lib_index_js_ref_4_0_node_modules_vue_loader_lib_index_js_vue_loader_options_OtpMultipleVerification_vue_vue_type_script_lang_js___WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../node_modules/babel-loader/lib??ref--4-0!../../../node_modules/vue-loader/lib??vue-loader-options!./OtpMultipleVerification.vue?vue&type=script&lang=js& */ "./node_modules/babel-loader/lib/index.js?!./node_modules/vue-loader/lib/index.js?!./resources/js/components/OtpMultipleVerification.vue?vue&type=script&lang=js&");
+/* empty/unused harmony star reexport */ /* harmony default export */ __webpack_exports__["default"] = (_node_modules_babel_loader_lib_index_js_ref_4_0_node_modules_vue_loader_lib_index_js_vue_loader_options_OtpMultipleVerification_vue_vue_type_script_lang_js___WEBPACK_IMPORTED_MODULE_0__["default"]); 
 
 /***/ }),
 
-/***/ "./resources/js/components/Form.vue?vue&type=template&id=8048fca2&":
-/*!*************************************************************************!*\
-  !*** ./resources/js/components/Form.vue?vue&type=template&id=8048fca2& ***!
-  \*************************************************************************/
+/***/ "./resources/js/components/OtpMultipleVerification.vue?vue&type=template&id=4105cc7b&":
+/*!********************************************************************************************!*\
+  !*** ./resources/js/components/OtpMultipleVerification.vue?vue&type=template&id=4105cc7b& ***!
+  \********************************************************************************************/
 /*! exports provided: render, staticRenderFns */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _node_modules_vue_loader_lib_loaders_templateLoader_js_vue_loader_options_node_modules_vue_loader_lib_index_js_vue_loader_options_Form_vue_vue_type_template_id_8048fca2___WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!../../../node_modules/vue-loader/lib??vue-loader-options!./Form.vue?vue&type=template&id=8048fca2& */ "./node_modules/vue-loader/lib/loaders/templateLoader.js?!./node_modules/vue-loader/lib/index.js?!./resources/js/components/Form.vue?vue&type=template&id=8048fca2&");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "render", function() { return _node_modules_vue_loader_lib_loaders_templateLoader_js_vue_loader_options_node_modules_vue_loader_lib_index_js_vue_loader_options_Form_vue_vue_type_template_id_8048fca2___WEBPACK_IMPORTED_MODULE_0__["render"]; });
+/* harmony import */ var _node_modules_vue_loader_lib_loaders_templateLoader_js_vue_loader_options_node_modules_vue_loader_lib_index_js_vue_loader_options_OtpMultipleVerification_vue_vue_type_template_id_4105cc7b___WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!../../../node_modules/vue-loader/lib??vue-loader-options!./OtpMultipleVerification.vue?vue&type=template&id=4105cc7b& */ "./node_modules/vue-loader/lib/loaders/templateLoader.js?!./node_modules/vue-loader/lib/index.js?!./resources/js/components/OtpMultipleVerification.vue?vue&type=template&id=4105cc7b&");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "render", function() { return _node_modules_vue_loader_lib_loaders_templateLoader_js_vue_loader_options_node_modules_vue_loader_lib_index_js_vue_loader_options_OtpMultipleVerification_vue_vue_type_template_id_4105cc7b___WEBPACK_IMPORTED_MODULE_0__["render"]; });
 
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "staticRenderFns", function() { return _node_modules_vue_loader_lib_loaders_templateLoader_js_vue_loader_options_node_modules_vue_loader_lib_index_js_vue_loader_options_Form_vue_vue_type_template_id_8048fca2___WEBPACK_IMPORTED_MODULE_0__["staticRenderFns"]; });
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "staticRenderFns", function() { return _node_modules_vue_loader_lib_loaders_templateLoader_js_vue_loader_options_node_modules_vue_loader_lib_index_js_vue_loader_options_OtpMultipleVerification_vue_vue_type_template_id_4105cc7b___WEBPACK_IMPORTED_MODULE_0__["staticRenderFns"]; });
+
+
+
+/***/ }),
+
+/***/ "./resources/js/components/OtpSingleVerification.vue":
+/*!***********************************************************!*\
+  !*** ./resources/js/components/OtpSingleVerification.vue ***!
+  \***********************************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _OtpSingleVerification_vue_vue_type_template_id_59d720b3___WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./OtpSingleVerification.vue?vue&type=template&id=59d720b3& */ "./resources/js/components/OtpSingleVerification.vue?vue&type=template&id=59d720b3&");
+/* harmony import */ var _OtpSingleVerification_vue_vue_type_script_lang_js___WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./OtpSingleVerification.vue?vue&type=script&lang=js& */ "./resources/js/components/OtpSingleVerification.vue?vue&type=script&lang=js&");
+/* empty/unused harmony star reexport *//* harmony import */ var _node_modules_vue_loader_lib_runtime_componentNormalizer_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../../../node_modules/vue-loader/lib/runtime/componentNormalizer.js */ "./node_modules/vue-loader/lib/runtime/componentNormalizer.js");
+
+
+
+
+
+/* normalize component */
+
+var component = Object(_node_modules_vue_loader_lib_runtime_componentNormalizer_js__WEBPACK_IMPORTED_MODULE_2__["default"])(
+  _OtpSingleVerification_vue_vue_type_script_lang_js___WEBPACK_IMPORTED_MODULE_1__["default"],
+  _OtpSingleVerification_vue_vue_type_template_id_59d720b3___WEBPACK_IMPORTED_MODULE_0__["render"],
+  _OtpSingleVerification_vue_vue_type_template_id_59d720b3___WEBPACK_IMPORTED_MODULE_0__["staticRenderFns"],
+  false,
+  null,
+  null,
+  null
+  
+)
+
+/* hot reload */
+if (false) { var api; }
+component.options.__file = "resources/js/components/OtpSingleVerification.vue"
+/* harmony default export */ __webpack_exports__["default"] = (component.exports);
+
+/***/ }),
+
+/***/ "./resources/js/components/OtpSingleVerification.vue?vue&type=script&lang=js&":
+/*!************************************************************************************!*\
+  !*** ./resources/js/components/OtpSingleVerification.vue?vue&type=script&lang=js& ***!
+  \************************************************************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _node_modules_babel_loader_lib_index_js_ref_4_0_node_modules_vue_loader_lib_index_js_vue_loader_options_OtpSingleVerification_vue_vue_type_script_lang_js___WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../node_modules/babel-loader/lib??ref--4-0!../../../node_modules/vue-loader/lib??vue-loader-options!./OtpSingleVerification.vue?vue&type=script&lang=js& */ "./node_modules/babel-loader/lib/index.js?!./node_modules/vue-loader/lib/index.js?!./resources/js/components/OtpSingleVerification.vue?vue&type=script&lang=js&");
+/* empty/unused harmony star reexport */ /* harmony default export */ __webpack_exports__["default"] = (_node_modules_babel_loader_lib_index_js_ref_4_0_node_modules_vue_loader_lib_index_js_vue_loader_options_OtpSingleVerification_vue_vue_type_script_lang_js___WEBPACK_IMPORTED_MODULE_0__["default"]); 
+
+/***/ }),
+
+/***/ "./resources/js/components/OtpSingleVerification.vue?vue&type=template&id=59d720b3&":
+/*!******************************************************************************************!*\
+  !*** ./resources/js/components/OtpSingleVerification.vue?vue&type=template&id=59d720b3& ***!
+  \******************************************************************************************/
+/*! exports provided: render, staticRenderFns */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _node_modules_vue_loader_lib_loaders_templateLoader_js_vue_loader_options_node_modules_vue_loader_lib_index_js_vue_loader_options_OtpSingleVerification_vue_vue_type_template_id_59d720b3___WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!../../../node_modules/vue-loader/lib??vue-loader-options!./OtpSingleVerification.vue?vue&type=template&id=59d720b3& */ "./node_modules/vue-loader/lib/loaders/templateLoader.js?!./node_modules/vue-loader/lib/index.js?!./resources/js/components/OtpSingleVerification.vue?vue&type=template&id=59d720b3&");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "render", function() { return _node_modules_vue_loader_lib_loaders_templateLoader_js_vue_loader_options_node_modules_vue_loader_lib_index_js_vue_loader_options_OtpSingleVerification_vue_vue_type_template_id_59d720b3___WEBPACK_IMPORTED_MODULE_0__["render"]; });
+
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "staticRenderFns", function() { return _node_modules_vue_loader_lib_loaders_templateLoader_js_vue_loader_options_node_modules_vue_loader_lib_index_js_vue_loader_options_OtpSingleVerification_vue_vue_type_template_id_59d720b3___WEBPACK_IMPORTED_MODULE_0__["staticRenderFns"]; });
+
+
+
+/***/ }),
+
+/***/ "./resources/js/components/Payment.vue":
+/*!*********************************************!*\
+  !*** ./resources/js/components/Payment.vue ***!
+  \*********************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _Payment_vue_vue_type_template_id_7bace86b___WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./Payment.vue?vue&type=template&id=7bace86b& */ "./resources/js/components/Payment.vue?vue&type=template&id=7bace86b&");
+/* harmony import */ var _Payment_vue_vue_type_script_lang_js___WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./Payment.vue?vue&type=script&lang=js& */ "./resources/js/components/Payment.vue?vue&type=script&lang=js&");
+/* empty/unused harmony star reexport *//* harmony import */ var _node_modules_vue_loader_lib_runtime_componentNormalizer_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../../../node_modules/vue-loader/lib/runtime/componentNormalizer.js */ "./node_modules/vue-loader/lib/runtime/componentNormalizer.js");
+
+
+
+
+
+/* normalize component */
+
+var component = Object(_node_modules_vue_loader_lib_runtime_componentNormalizer_js__WEBPACK_IMPORTED_MODULE_2__["default"])(
+  _Payment_vue_vue_type_script_lang_js___WEBPACK_IMPORTED_MODULE_1__["default"],
+  _Payment_vue_vue_type_template_id_7bace86b___WEBPACK_IMPORTED_MODULE_0__["render"],
+  _Payment_vue_vue_type_template_id_7bace86b___WEBPACK_IMPORTED_MODULE_0__["staticRenderFns"],
+  false,
+  null,
+  null,
+  null
+  
+)
+
+/* hot reload */
+if (false) { var api; }
+component.options.__file = "resources/js/components/Payment.vue"
+/* harmony default export */ __webpack_exports__["default"] = (component.exports);
+
+/***/ }),
+
+/***/ "./resources/js/components/Payment.vue?vue&type=script&lang=js&":
+/*!**********************************************************************!*\
+  !*** ./resources/js/components/Payment.vue?vue&type=script&lang=js& ***!
+  \**********************************************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _node_modules_babel_loader_lib_index_js_ref_4_0_node_modules_vue_loader_lib_index_js_vue_loader_options_Payment_vue_vue_type_script_lang_js___WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../node_modules/babel-loader/lib??ref--4-0!../../../node_modules/vue-loader/lib??vue-loader-options!./Payment.vue?vue&type=script&lang=js& */ "./node_modules/babel-loader/lib/index.js?!./node_modules/vue-loader/lib/index.js?!./resources/js/components/Payment.vue?vue&type=script&lang=js&");
+/* empty/unused harmony star reexport */ /* harmony default export */ __webpack_exports__["default"] = (_node_modules_babel_loader_lib_index_js_ref_4_0_node_modules_vue_loader_lib_index_js_vue_loader_options_Payment_vue_vue_type_script_lang_js___WEBPACK_IMPORTED_MODULE_0__["default"]); 
+
+/***/ }),
+
+/***/ "./resources/js/components/Payment.vue?vue&type=template&id=7bace86b&":
+/*!****************************************************************************!*\
+  !*** ./resources/js/components/Payment.vue?vue&type=template&id=7bace86b& ***!
+  \****************************************************************************/
+/*! exports provided: render, staticRenderFns */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _node_modules_vue_loader_lib_loaders_templateLoader_js_vue_loader_options_node_modules_vue_loader_lib_index_js_vue_loader_options_Payment_vue_vue_type_template_id_7bace86b___WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!../../../node_modules/vue-loader/lib??vue-loader-options!./Payment.vue?vue&type=template&id=7bace86b& */ "./node_modules/vue-loader/lib/loaders/templateLoader.js?!./node_modules/vue-loader/lib/index.js?!./resources/js/components/Payment.vue?vue&type=template&id=7bace86b&");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "render", function() { return _node_modules_vue_loader_lib_loaders_templateLoader_js_vue_loader_options_node_modules_vue_loader_lib_index_js_vue_loader_options_Payment_vue_vue_type_template_id_7bace86b___WEBPACK_IMPORTED_MODULE_0__["render"]; });
+
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "staticRenderFns", function() { return _node_modules_vue_loader_lib_loaders_templateLoader_js_vue_loader_options_node_modules_vue_loader_lib_index_js_vue_loader_options_Payment_vue_vue_type_template_id_7bace86b___WEBPACK_IMPORTED_MODULE_0__["staticRenderFns"]; });
 
 
 
@@ -66370,6 +67544,75 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "render", function() { return _node_modules_vue_loader_lib_loaders_templateLoader_js_vue_loader_options_node_modules_vue_loader_lib_index_js_vue_loader_options_Phone_vue_vue_type_template_id_d5fd61da___WEBPACK_IMPORTED_MODULE_0__["render"]; });
 
 /* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "staticRenderFns", function() { return _node_modules_vue_loader_lib_loaders_templateLoader_js_vue_loader_options_node_modules_vue_loader_lib_index_js_vue_loader_options_Phone_vue_vue_type_template_id_d5fd61da___WEBPACK_IMPORTED_MODULE_0__["staticRenderFns"]; });
+
+
+
+/***/ }),
+
+/***/ "./resources/js/components/SubscriptionForm.vue":
+/*!******************************************************!*\
+  !*** ./resources/js/components/SubscriptionForm.vue ***!
+  \******************************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _SubscriptionForm_vue_vue_type_template_id_55d8ed6c___WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./SubscriptionForm.vue?vue&type=template&id=55d8ed6c& */ "./resources/js/components/SubscriptionForm.vue?vue&type=template&id=55d8ed6c&");
+/* harmony import */ var _SubscriptionForm_vue_vue_type_script_lang_js___WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./SubscriptionForm.vue?vue&type=script&lang=js& */ "./resources/js/components/SubscriptionForm.vue?vue&type=script&lang=js&");
+/* empty/unused harmony star reexport *//* harmony import */ var _node_modules_vue_loader_lib_runtime_componentNormalizer_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../../../node_modules/vue-loader/lib/runtime/componentNormalizer.js */ "./node_modules/vue-loader/lib/runtime/componentNormalizer.js");
+
+
+
+
+
+/* normalize component */
+
+var component = Object(_node_modules_vue_loader_lib_runtime_componentNormalizer_js__WEBPACK_IMPORTED_MODULE_2__["default"])(
+  _SubscriptionForm_vue_vue_type_script_lang_js___WEBPACK_IMPORTED_MODULE_1__["default"],
+  _SubscriptionForm_vue_vue_type_template_id_55d8ed6c___WEBPACK_IMPORTED_MODULE_0__["render"],
+  _SubscriptionForm_vue_vue_type_template_id_55d8ed6c___WEBPACK_IMPORTED_MODULE_0__["staticRenderFns"],
+  false,
+  null,
+  null,
+  null
+  
+)
+
+/* hot reload */
+if (false) { var api; }
+component.options.__file = "resources/js/components/SubscriptionForm.vue"
+/* harmony default export */ __webpack_exports__["default"] = (component.exports);
+
+/***/ }),
+
+/***/ "./resources/js/components/SubscriptionForm.vue?vue&type=script&lang=js&":
+/*!*******************************************************************************!*\
+  !*** ./resources/js/components/SubscriptionForm.vue?vue&type=script&lang=js& ***!
+  \*******************************************************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _node_modules_babel_loader_lib_index_js_ref_4_0_node_modules_vue_loader_lib_index_js_vue_loader_options_SubscriptionForm_vue_vue_type_script_lang_js___WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../node_modules/babel-loader/lib??ref--4-0!../../../node_modules/vue-loader/lib??vue-loader-options!./SubscriptionForm.vue?vue&type=script&lang=js& */ "./node_modules/babel-loader/lib/index.js?!./node_modules/vue-loader/lib/index.js?!./resources/js/components/SubscriptionForm.vue?vue&type=script&lang=js&");
+/* empty/unused harmony star reexport */ /* harmony default export */ __webpack_exports__["default"] = (_node_modules_babel_loader_lib_index_js_ref_4_0_node_modules_vue_loader_lib_index_js_vue_loader_options_SubscriptionForm_vue_vue_type_script_lang_js___WEBPACK_IMPORTED_MODULE_0__["default"]); 
+
+/***/ }),
+
+/***/ "./resources/js/components/SubscriptionForm.vue?vue&type=template&id=55d8ed6c&":
+/*!*************************************************************************************!*\
+  !*** ./resources/js/components/SubscriptionForm.vue?vue&type=template&id=55d8ed6c& ***!
+  \*************************************************************************************/
+/*! exports provided: render, staticRenderFns */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _node_modules_vue_loader_lib_loaders_templateLoader_js_vue_loader_options_node_modules_vue_loader_lib_index_js_vue_loader_options_SubscriptionForm_vue_vue_type_template_id_55d8ed6c___WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!../../../node_modules/vue-loader/lib??vue-loader-options!./SubscriptionForm.vue?vue&type=template&id=55d8ed6c& */ "./node_modules/vue-loader/lib/loaders/templateLoader.js?!./node_modules/vue-loader/lib/index.js?!./resources/js/components/SubscriptionForm.vue?vue&type=template&id=55d8ed6c&");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "render", function() { return _node_modules_vue_loader_lib_loaders_templateLoader_js_vue_loader_options_node_modules_vue_loader_lib_index_js_vue_loader_options_SubscriptionForm_vue_vue_type_template_id_55d8ed6c___WEBPACK_IMPORTED_MODULE_0__["render"]; });
+
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "staticRenderFns", function() { return _node_modules_vue_loader_lib_loaders_templateLoader_js_vue_loader_options_node_modules_vue_loader_lib_index_js_vue_loader_options_SubscriptionForm_vue_vue_type_template_id_55d8ed6c___WEBPACK_IMPORTED_MODULE_0__["staticRenderFns"]; });
 
 
 

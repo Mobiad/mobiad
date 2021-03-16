@@ -15,6 +15,24 @@ Route::get('/', function () {
     return view('one', ['gifts' => ['Pesa', 'Muga wa maongezi', 'Kifurushi cha Data',]]);
 });
 
+
+/*** Customers **/
+Route::post('/signup', 'CustomerController@signup')->name('signup');
+
+Route::get('/customer/info', 'CustomerController@getCustomerInfo');
+Route::get('/verification/form', 'CustomerController@showOtpForm');
+Route::get('/verification/single/form', 'CustomerController@showSingleVerification');
+Route::get('/payment/form', 'CustomerController@showPaymentForm');
+/*** [end] Customers **/
+
+
+
+
+
+
+
+
+
 Route::get('/terms', function () { return view('terms'); })->name('terms');
 
 Auth::routes(['register' => false,  'reset' => false, 'verify' => false,]);
@@ -26,8 +44,6 @@ Route::get('/welcome', function () {return view('welcome'); })->name('welcome');
 Route::post('/verify/resend', 'CustomerController@resend')->name('verify.resend');
 
 Route::post('/verify', 'CustomerController@verify')->name('verify');
-
-Route::post('/signup', 'CustomerController@signup')->name('signup');
 
 Route::get('/admin', 'CustomerController@admin')->name('admin')->middleware('auth');
 

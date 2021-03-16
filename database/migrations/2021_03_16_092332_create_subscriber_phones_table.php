@@ -15,9 +15,15 @@ class CreateSubscriberPhonesTable extends Migration
     {
         Schema::create('subscriber_phones', function (Blueprint $table) {
             $table->bigIncrements('id');
+            $table->bigInteger('customer_id');
+            $table->string('phone');
+            $table->string('otp')->nullable();
+            $table->boolean('has_accepted_terms')->default(0);
+            $table->boolean('is_activated')->default(0);
             $table->timestamps();
         });
     }
+
 
     /**
      * Reverse the migrations.

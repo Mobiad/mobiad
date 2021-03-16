@@ -49,7 +49,11 @@ Vue.use(ToastPlugin);
 // Optionally install the BootstrapVue icon components plugin
 Vue.use(IconsPlugin);
 
-Vue.component("form-data", require("./components/Form.vue").default);
+Vue.component("form-data", require("./components/SubscriptionForm.vue").default);
+Vue.component("verification", require("./components/OtpMultipleVerification.vue").default);
+Vue.component("single-verification", require("./components/OtpSingleVerification.vue").default);
+Vue.component("payment", require("./components/Payment.vue").default);
+
 Vue.component("phone-input", require("./components/Phone.vue").default);
 Vue.component("table-data", require("./components/Table.vue").default);
 
@@ -58,6 +62,14 @@ Vue.component("table-data", require("./components/Table.vue").default);
  * the page. Then, you may begin adding components to this application
  * or customize the JavaScript scaffolding to fit your unique needs.
  */
+
+//let base_url ="https://" + window.location.host;
+let base_url ="http://" + window.location.host;
+window.api_url =  base_url + "/api/v1" ;
+window.site_url =   base_url ;
+window.img_url =   base_url ;
+
+
 
 const app = new Vue({
     el: "#app"

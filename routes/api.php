@@ -17,3 +17,19 @@ Route::post('validate', [\App\Http\Controllers\Controller::class, 'validate']);
 Route::middleware('auth:api')->get('/user', function (Request $request) {
     return $request->user();
 });
+
+Route::post('/verify/otp', 'CustomerController@verifyPhoneOtp');
+Route::post('/payment/init', 'CustomerController@paymentInit');
+
+Route::post('/payment/simulate', 'CustomerController@simulateSubmission');
+
+
+
+/*** Codeblocks API**/
+Route::get('/payment/confirm/callback', 'CustomerController@confirmPayment');
+Route::post('/payment/confirm/callback', 'CustomerController@confirmPayment');
+
+/*** [end] Codeblocks **/
+
+
+
