@@ -19,7 +19,13 @@ class Customer extends Model
         'tune',
         'voice',
         'ref',
-        'is_paid'
+        'is_paid',
+
+        'monthly_fee',
+        'subscription_reference',
+        'receipt_number',
+        'subscription_start',
+        'subscription_end'
     ];
 
     protected $casts = [

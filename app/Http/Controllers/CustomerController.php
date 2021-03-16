@@ -140,6 +140,7 @@ class CustomerController extends Controller{
 
         /** Amount due */
         $amount = 15000 * $customer->subscription_period * count($customer->phones);
+        $amount = 1000;
 
         /** Phone */
         $paymentPhone = $request->input('payment_phone');
@@ -336,7 +337,22 @@ class CustomerController extends Controller{
 
     public function confirmPayment(Request $request){
         Log::debug($request->all());
-        return response()->json(["success"=>true,"message"=>"Transaction confirmed"]);
+        $customer = Customer::where('subscription_reference',$request->input('reference'))->first();
+
+        if($customer){
+            if($request->input('status')== "SUCCESS"){
+                $customer->is_paid = true;
+                $customer->save();
+                return response()->json(["success"=>true,"message"=>"Transaction confirmed"]);
+            }else{
+                Log::debug("Callback received but not paid");
+                return response()->json(["success"=>false,"message"=>"Callback received but not paid"]);
+
+            }
+        }
+
+        return response()->json(["success"=>false,"message"=>"Transaction NOT confirmed"]);
+
     }
 
 
