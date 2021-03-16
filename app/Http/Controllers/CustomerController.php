@@ -336,6 +336,8 @@ class CustomerController extends Controller{
     }
 
     public function confirmPayment(Request $request){
+
+
         Log::debug($request->all());
         $customer = Customer::where('subscription_reference',$request->input('reference'))->first();
 
@@ -384,6 +386,8 @@ class CustomerController extends Controller{
             ],
             'body' => $body,
         ];
+
+        return $options;
 
         try{
             $response = $client->request('POST', $url, $options);
