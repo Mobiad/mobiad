@@ -142,7 +142,6 @@ class CustomerController extends Controller{
 
         /** Amount due */
         $amount = 15000 * $customer->subscription_period * count($customer->phones);
-        $amount = 1000;
 
         /** Phone */
         $paymentPhone = $request->input('payment_phone');
