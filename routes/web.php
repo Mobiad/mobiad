@@ -25,6 +25,12 @@ Route::get('/verification/single/form', 'CustomerController@showSingleVerificati
 Route::get('/payment/form', 'CustomerController@showPaymentForm');
 /*** [end] Customers **/
 
+/*** Terms and conditions **/
+Route::get('/customer/export', 'TermsController@exportCustomerContract')->name('customer.export');
+Route::get('/terms/download', 'TermsController@downloadTerm');
+
+/*** [end] Terms and conditions **/
+
 
 
 

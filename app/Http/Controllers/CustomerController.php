@@ -25,17 +25,13 @@ use Maatwebsite\Excel\Facades\Excel;
 
 class CustomerController extends Controller{
 
-    public function signup(Request $request)
-    {
-        Log::debug($request->all());
+
+    public function signup(Request $request){
 
         $this->validator($request->all())->validate();
 
         // Check if customer exist, for returned customer
         $phone = str_replace("+", "", PhoneNumber::make($request->phone, 'TZ')->formatE164());
-
-
-        Log::debug($request->all());
 
         $data = $request->all();
         $customer = Customer::create([
@@ -53,31 +49,26 @@ class CustomerController extends Controller{
         $request->session()->put('customer', $request->all());
 
         foreach ($data['numbers'] as $number) {
+            Log::debug($number);
             SubscriberPhone::create([
                 'customer_id' => $customer->id,
-                'phone' => $number,
-                'otp' => Hash::make('123456'),
+                'phone' => $number['phone'],
+                'name' => $number['name'],
+                'otp' => rand(111111,999999),
                 'has_accepted_terms' => false,
                 'is_activated' => false
             ]);
         }
 
-        event(new CustomerRegistered($this->generateOtp($phone), $customer));
+        $subscribers = SubscriberPhone::where(['customer_id' => $customer->id])->get();
+        foreach ($subscribers as $subscriber) {
+            $message= $subscriber->otp." is your mobiad verification code";
+            NotificationController::sendSms($subscriber->phone,$message);
+        }
 
+        //event(new CustomerRegistered($this->generateOtp($phone), $customer));
         return response()->json(['status' => 'success', 'message' => trans('customer.welcome'), 'customer'=>$customer]);
 
-    }
-
-    public function showOtpForm(Request $request){
-       return response()->view('verification')->cookie(
-           'customer_id', $request->input('customer_id'), 3600, null, null, false, false
-       );
-    }
-
-    public function showSingleVerification(Request $request){
-       return response()->view('verification_single')->cookie(
-           'phone_number', $request->input('phone_number'), 3600, null, null, false, false
-       );
     }
 
     public function getCustomerInfo(Request $request){
@@ -86,21 +77,38 @@ class CustomerController extends Controller{
         return response()->json($responseData);
     }
 
+
+
+    /*** Phone-OTP Verication **/
+    public function showOtpForm(Request $request){
+        return response()->view('verification')->cookie(
+            'customer_id', $request->input('customer_id'), 3600, null, null, false, false
+        );
+    }
+
+    public function showSingleVerification(Request $request){
+        return response()->view('verification_single')->cookie(
+            'phone_number', $request->input('phone_number'), 3600, null, null, false, false
+        );
+    }
+
     public function verifyPhoneOtp(Request $request){
 
         $phone = SubscriberPhone::where([
             'phone' => $request->input('phone_number')
-        ])->first();
+        ])->latest()->first();
 
         if(!$phone){
             return  response()->json([ "message"=>"Phone not found"],412);
         }
+        Log::debug($request->input('otp'));
+        Log::debug( $phone->otp);
 
-        if(!(Hash::check($request->input('otp'),$phone->otp))){
+        if( $request->input('otp') != $phone->otp ){
             return  response()->json([ "message"=>"Wrong code"],412);
         }
 
-        $phone = SubscriberPhone::where([
+        SubscriberPhone::where([
             'phone' => $request->input('phone_number')
         ])->update([
             'has_accepted_terms' => true
@@ -108,6 +116,7 @@ class CustomerController extends Controller{
 
         return response()->json(["message"=>"Success"]);
     }
+    /*** [end] Phone-OTP Verication **/
 
 
     /***  Payment **/
@@ -159,20 +168,22 @@ class CustomerController extends Controller{
 
 
 
+
+
+
+
     /*** **/
     public function customer($phone)
     {
         return view('verify', ['phone' => $phone]);
     }
 
-    public function generateOtp($owner)
-    {
+    public function generateOtp($owner){
         $otp = new Otp();
         return $otp->generate($owner, 6, 15);;
     }
 
-    public function verify(Request $request)
-    {
+    public function verify(Request $request){
         $request->validate([
             'otp' => 'required|min:6',
         ]);
@@ -206,7 +217,6 @@ class CustomerController extends Controller{
 
     /**
      * Get a validator for an incoming registration request.
-     *
      * @param array $data
      * @return \Illuminate\Contracts\Validation\Validator
      */
@@ -228,12 +238,10 @@ class CustomerController extends Controller{
 
     /**
      * Create a new customer instance after a valid registration.
-     *
      * @param array $data
      * @return \App\Customer
      */
-    protected function create(array $data)
-    {
+    protected function create(array $data){
         return Customer::create([
             'fullname' => $data['fullname'],
             'phone' => str_replace("+", "", PhoneNumber::make($data['phone'], 'TZ')),
@@ -248,8 +256,7 @@ class CustomerController extends Controller{
         ]);
     }
 
-    public function resend(Request $request)
-    {
+    public function resend(Request $request){
         $phone = str_replace("+", "", PhoneNumber::make($request->phone, 'TZ')->formatE164());
         $customer = Customer::where('phone', $phone)->first();
 
@@ -268,25 +275,21 @@ class CustomerController extends Controller{
         return redirect('home')->with('status', 'We don not have your records, please sign up');
     }
 
-    public function admin()
-    {
+    public function admin(){
         $customers = DB::table('customers')->latest()->simplePaginate(15);
         // dd($customers->all());
         return view('admin', ['customers' => $customers]);
     }
 
-    public function exportFrom(Request $request)
-    {
+    public function exportFrom(Request $request){
         return (new CustomersFromExport($request->from, $request->to))->download('customers.xlsx');
     }
 
-    public function exportCustomer(Request $request)
-    {
+    public function exportCustomer(Request $request){
         return (new CustomerExport($request->id))->download('customer.xlsx');
     }
 
-    public function exportAll()
-    {
+    public function exportAll(){
         return Excel::download(new AllCustomersExport, 'customers.xlsx');
     }
 
@@ -359,8 +362,6 @@ class CustomerController extends Controller{
         return response()->json(["success"=>false,"message"=>"Transaction NOT confirmed"]);
 
     }
-
-
 
     /*** Helper **/
     public function  simulateSubmission(Request $request){

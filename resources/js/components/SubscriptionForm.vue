@@ -174,28 +174,46 @@
               </div>
             </label>
 
-            <b-input-group
-                v-for="phone in form.subscriber_numbers"
-                :key="phone.key"
-                class="my-2"
-            >
-              <b-form-input
-                  id="input-subscriber_numbers"
-                  v-model="phone.value"
-                  type="text"
-                  placeholder="Eg: 255 781 123312"
-                  required
-              >
-              </b-form-input>
-              <b-input-group-append>
-                <b-button
-                    variant="danger"
-                    @click="removePhoneNumber(phone)"
-                >Remove
-                </b-button
-                >
-              </b-input-group-append>
-            </b-input-group>
+            <template v-for="phone in form.subscriber_numbers">
+             <div class="mb-5">
+               <!--phone-->
+               <b-input-group
+                   :key="phone.key"
+                   class="my-2">
+                 <b-form-input
+                     id="input-subscriber_numbers"
+                     v-model="phone.value"
+                     type="text"
+                     placeholder="Eg: 255781123312"
+                     required
+                 >
+                 </b-form-input>
+                 <b-input-group-append>
+                   <b-button
+                       variant="danger"
+                       @click="removePhoneNumber(phone)"
+                   >Remove
+                   </b-button
+                   >
+                 </b-input-group-append>
+               </b-input-group>
+
+               <!--name-->
+               <b-input-group
+                   :key="phone.key"
+                   class="my-2">
+                 <b-form-input
+                     id="input-subscriber_numbers"
+                     v-model="phone.name"
+                     type="text"
+                     placeholder="Subscriber Name"
+                     required
+                 >
+                 </b-form-input>
+               </b-input-group>
+             </div>
+            </template>
+
           </b-form-group>
 
           <div style=" height: 24px"></div>
@@ -305,7 +323,8 @@ export default {
         subscriber_numbers: [
           {
             key: 1,
-            value: ""
+            value: "",
+            name: ""
           }
         ],
         terms_and_conditions: 0
@@ -384,7 +403,10 @@ export default {
       event.preventDefault();
 
       let numbers = this.form.subscriber_numbers.map(function (item) {
-        return item.value;
+        return {
+          name :item.name,
+          phone :item.value,
+        };
       });
 
       this.form.numbers = numbers;

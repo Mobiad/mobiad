@@ -60,6 +60,9 @@
                         <td>{{$customer->phone}}</td>
                         <td>{{$customer->businessname}}</td>
                         <td>
+                            <a target="_blank" href="{{ route('customer.export') }}?id={{$customer->id}}" class="btn btn-primary" size="sm">Contract</a>
+                        </td>
+                        <td>
                             <p class="d-inline-block text-truncate" style="max-width: 150px;">
                                 {{$customer->businessdesc}}</p>
                         </td>
