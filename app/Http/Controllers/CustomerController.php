@@ -28,10 +28,20 @@ class CustomerController extends Controller{
 
     public function signup(Request $request){
 
-        $this->validator($request->all())->validate();
 
         // Check if customer exist, for returned customer
+        $inputPhone=$request->phone;
+        $inputPhone=str_replace("+", "",$inputPhone);
+        $prefix = substr($inputPhone, 0, 3);
+        if($prefix!='255'){
+            $inputPhone=  '255'.substr($inputPhone, 1, strlen($inputPhone)-1 );
+        }
+
+        $request->phone = $inputPhone;
+        $this->validator($request->all())->validate();
+
         $phone = str_replace("+", "", PhoneNumber::make($request->phone, 'TZ')->formatE164());
+
 
         $data = $request->all();
         $customer = Customer::create([
@@ -49,10 +59,18 @@ class CustomerController extends Controller{
         $request->session()->put('customer', $request->all());
 
         foreach ($data['numbers'] as $number) {
-            Log::debug($number);
+
+            $subscriberPhone=$number['phone'];
+            $subscriberPhone=str_replace("+", "",$subscriberPhone);
+            $prefix = substr($subscriberPhone, 0, 3);
+            if($prefix!='255'){
+                $subscriberPhone=  '255'.substr($subscriberPhone, 1, strlen($subscriberPhone)-1 );
+            }
+            Log::debug($subscriberPhone);
+
             SubscriberPhone::create([
                 'customer_id' => $customer->id,
-                'phone' => $number['phone'],
+                'phone' => $subscriberPhone,
                 'name' => $number['name'],
                 'otp' => rand(111111,999999),
                 'has_accepted_terms' => false,
@@ -117,6 +135,9 @@ class CustomerController extends Controller{
         return response()->json(["message"=>"Success"]);
     }
     /*** [end] Phone-OTP Verication **/
+
+
+
 
 
     /***  Payment **/

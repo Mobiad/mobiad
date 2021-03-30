@@ -35,6 +35,7 @@ Route::post('/payment/confirm/callback', 'CustomerController@confirmPayment');
 
 /*** Test **/
 Route::post('/test/sms', 'NotificationController@sendSms');
+Route::post('/test/signup', 'CustomerController@signup');
 /*** [end] Test **/
 
 
