@@ -16,7 +16,7 @@
     <meta name="theme-color" content="#ffffff">
 
     <!-- Scripts -->
-    <script src="{{ asset('public/js/app.js') }}?v=0.02" defer></script>
+    <script src="{{ asset('public/js/app.js') }}?v=0.03" defer></script>
     {{-- <script src="{{ asset('js/intlTelInput.js') }}" defer></script> --}}
     {{-- <script src="{{ asset('js/utils.js') }}" defer></script> --}}
 
@@ -30,7 +30,7 @@
     {{-- <link href="https://fonts.googleapis.com/css?family=Nunito" rel="stylesheet"> --}}
 
     <!-- Styles -->
-    <link href="{{ asset('/public/css/app.css') }}?v=0.02" rel="stylesheet">
+    <link href="{{ asset('/public/css/app.css') }}?v=0.03" rel="stylesheet">
     {{-- <link href="{{ asset('css/intlTelInput.min.css') }}" rel="stylesheet"> --}}
 </head>
 

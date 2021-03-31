@@ -88,7 +88,7 @@
               id="input-group-4"
               class="my-4"
               label="Service Period/ Miezi ya Huduma"
-              description="Gharama za muito wa simu kwa namba moja ni shilingi TZS 10,000/= kwa Mwezi mmoja
+              description="Gharama za muito wa simu kwa namba moja ni shilingi TZS 15,000/= kwa Mwezi mmoja
                                 (TZS 15,000 / Kwa Mwezi / Kwa Namba Moja)"
               label-for="input-subscription_period"
               v-slot="{ ariaDescribedby }"
