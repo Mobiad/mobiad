@@ -89,7 +89,7 @@
               class="my-4"
               label="Service Period/ Miezi ya Huduma"
               description="Gharama za muito wa simu kwa namba moja ni shilingi TZS 10,000/= kwa Mwezi mmoja
-                                (TZS 10,000 / Kwa Mwezi / Kwa Namba Moja)"
+                                (TZS 15,000 / Kwa Mwezi / Kwa Namba Moja)"
               label-for="input-subscription_period"
               v-slot="{ ariaDescribedby }"
           >
@@ -115,10 +115,9 @@
           <b-form-group
               id="input-group-tune"
               label="Include Tune Production / Kutengeneza Muito"
-              description="Gharama za kutengeneza muito wa biashara yako ni shilingi TZS 20,000/="
+              description=""
               label-for="input-tune"
-              class="my-4"
-          >
+              class="my-4">
             <b-form-radio-group id="input-tune" v-model="form.tune">
               <b-form-radio value="1">Yes</b-form-radio>
               <b-form-radio value="0">No</b-form-radio>
