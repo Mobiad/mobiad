@@ -81,7 +81,7 @@ class CustomerController extends Controller{
         $subscribers = SubscriberPhone::where(['customer_id' => $customer->id])->get();
         foreach ($subscribers as $subscriber) {
             $message= $subscriber->otp." is your mobiad verification code";
-            NotificationController::sendSms($subscriber->phone,$message);
+            //NotificationController::sendSms($subscriber->phone,$message);
         }
 
         //event(new CustomerRegistered($this->generateOtp($phone), $customer));

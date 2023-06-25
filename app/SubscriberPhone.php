@@ -14,5 +14,6 @@ class SubscriberPhone extends Model{
         'has_accepted_terms',
         'is_activated',
     ];
+
 }
 
